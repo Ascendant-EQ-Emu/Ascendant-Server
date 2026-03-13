@@ -1,0 +1,6 @@
+[submodule "submodules/websocketpp"]
+	path = submodules/websocketpp
+	url = https://github.com/zaphoyd/websocketpp.git
+[submodule "submodules/vcpkg"]
+	path = submodules/vcpkg
+	url = https://github.com/microsoft/vcpkg.git

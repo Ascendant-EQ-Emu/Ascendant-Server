@@ -1,0 +1,73 @@
+# Contributing
+
+Thank you for contributing to Ascendant Server.
+
+This repository is intended to preserve and improve the Ascendant server project in a community-maintained form.
+
+## Before You Contribute
+
+Please review:
+
+- `README.md`
+- `GOVERNANCE.md`
+- `SECURITY.md`
+
+## General Expectations
+
+NOTE:  If a change can be beneficial to the EQEmu project and not particularly to the Ascendant project, please make those changes via a PR to the upstream project.  Those will eventually flow into this server.
+
+Contributors should aim to submit changes that are:
+
+- relevant to the project
+- understandable and reviewable
+- respectful of the upstream EQEmu base
+- free of sensitive or private data
+- consistent with the long-term maintainability of the project
+
+## Do Not Submit
+
+Do not submit:
+
+- secrets or credentials
+- live player data
+- private production backups
+- private moderation or administrative records
+- generated runtime junk that does not belong in version control
+- content you do not have the right to contribute
+
+## Recommended Workflow
+
+In general:
+
+1. make your changes in a clean working copy
+2. review the files being changed
+3. verify that no sensitive files are included
+4. open a pull request or submit the change for maintainer review
+
+## Pull Requests
+
+When submitting a pull request:
+
+- explain what changed
+- explain why it changed
+- keep changes focused where possible
+- note anything that may affect setup, content behavior, or compatibility
+
+## Code and Content Changes
+
+Changes may include:
+
+- source code changes under `/code`
+- scripts, quests, and server-side content under `/server`
+- documentation
+- tooling and sync workflow improvements
+
+## Sensitive Files
+
+Some files are intentionally excluded from the repository. Do not reintroduce excluded private files without review.
+
+If you believe a currently excluded file belongs in the repository, raise it with maintainers first.
+
+## Questions
+
+If you are unsure whether something belongs in the public repository, ask before submitting it.

@@ -1,0 +1,39 @@
+# nested git internals from copied folders
+**/.git
+
+# sensitive configs
+server/eqemu_config.json
+server/login.json
+**/login.json
+**/eqemu_config.json
+.env
+.env.*
+
+# logs / runtime junk
+nohup.out
+*.log
+server/logs/
+logs/
+
+# backups / dumps
+*.sql
+*.sql.gz
+*.bak
+*.dump
+backups/
+dumps/
+
+# generated / private server files
+server/shared/hotfix_items
+server/shared/items
+server/bin/spire
+server/talkeq.conf
+server/talkeq_guilds.txt
+server/talkeq_users.txt
+server/talkeq-linux
+
+# common junk
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp

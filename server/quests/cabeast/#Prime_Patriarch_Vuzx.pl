@@ -1,0 +1,110 @@
+# items: 12686, 7827, 13099, 13849, 7828, 12441, 7829, 14599, 12432, 7830, 8999, 7831, 12409, 12431, 12428, 12727, 48045, 18848, 13577, 48068, 48073
+sub EVENT_SPAWN {
+  $x = $npc->GetX();
+  $y = $npc->GetY();
+  quest::set_proximity($x - 50, $x + 50, $y - 50, $y + 50);
+}
+
+sub EVENT_ENTER {
+  if(plugin::check_hasitem($client, 18848)) { 
+		$client->Message(15,"As your reptilian eyes adjust to the darkness of the room, an imposing Iksar turns towards you, addressing you with a sharp hiss. 'I am Prime Patriarch Vuzx. The time has come young one. You have chosen the path of the Beastlord. Open your inventory and read the note within. Once you are ready to begin your training, hand the note to me and we will continue.'");
+  }
+}
+ 
+sub EVENT_SAY {
+	if($text =~ /hail/i) {
+		quest::say("Greetings. I only train those who follow the path of the Patriarchs of Cabilis and have yet to develop their [powers] over the beasts of the wild, or maybe you are trained and are here to [help aid in our cause]?");
+	}
+	if($text =~ /powers/i) { #Armor of the Patriarch Quest
+		quest::say("Good. In order to develop your powers over the beasts of the wild, you must complete several [tests] which will prove your loyalty to our cause. ");
+	}
+	if($text =~ /tests/i) { #Armor of the Patriarch Quest (part 1 - Patriarch's Bracer)
+		quest::say("In order to develop your powers you will need to collect various items which will serve to me as proof of your continued training. When you return the items to me, I will reward you with a piece of armor to help protect you from the dangers found outside our city walls. Go now and bring me four leech husks as proof of growing powers. ");
+	}
+	if($text =~ /aid/i) { #Claw of the Cub Quest (Claw of the Spiritual Elder Quest Line 1/6)
+		quest::say('Good. Well we shall see how well you match up with our needs with this first mission. Go out beyond the safety of our city walls and bring back proof of your inner strength and training. This proof will be in the form of a sarnak raider brain, a froglok bounder javelin, an Iksar bandit mask, and a mandible from a rogue shaman.');
+	}
+	if($text =~ /seal of choatl/i) {
+		quest::say("The Amulet of Choatl is the seal that protected the pure energies of the Sacred Figurine from being tainted. It appears as though Lativ knew that by destroying this seal we have no power against him now that he has the Sacred Figurine. The only hope we have is that someone is [capable] of finding the four pieces of the Seal.");
+	}
+	if($text =~ /capable/i) {
+		quest::say("If you believe you are, I will entrust this container to you. It will be the foundation needed to repair the Seal. Combine the seal fragments with heady kiola and the remains of Lativ and you should be able to restore the Seal. Using his remains in combination with the seal, will weaken him. Go now and seek out the Seal's pieces. Once you have combined them all go and [find Lativ]. Use the Seal against him and rid us of his nuisance. Return to me once you have [completed your mission].");
+		quest::summonitem(48073); # Item: Vuzx's Container
+	}
+	if($text =~ /find lativ/i) {
+		quest::say("You will be able to find him where we used to train for rituals. He will be expecting you in the jungle where he feels close to home.");
+	}
+	if($text =~ /completed.*mission/i) {
+		quest::say("Ah, if what you speak is true, hand over the Sacred Figurine and your Claw of the Mature Patriarch to Elder Patriarch Ixthal to reward you properly.");
+	}
+}
+ 
+sub EVENT_ITEM {
+	if (plugin::check_handin(\%itemcount, 12686 => 4)) { #Armor of the Patriarch Quest (part 2 - Patriarch's Cap)
+		quest::say("You have done well in your first test young patriarch! Wear these bracers to help protect you from the dangers you may find in your journey. Now for your next test you shall bring me three spiderling silks and one scarab carapace as continued proof our your growing powers. ");
+		quest::summonitem(7827); # Item: Patriarch's Bracer
+		quest::exp(20000);
+		quest::ding();
+		quest::faction(445,20); # Faction: Scaled Mystics
+		quest::faction(441,10); # Faction: Legion of Cabilis
+	}
+	elsif(plugin::check_handin(\%itemcount, 13099 => 3, 13849 => 1)) { #Armor of the Patriarch Quest (part 3 - Patriarch's Leggings)
+		quest::say("You have done well again young patriarch. Wear this cap proudly. Now for your next test, you shall bring me four watcher signal torches as proof of your growing powers. ");
+		quest::summonitem(7828); # Item: Patriarch's Cap
+		quest::exp(20000);
+		quest::ding();
+		quest::faction(445,20); # Faction: Scaled Mystics
+		quest::faction(441,10); # Faction: Legion of Cabilis
+	}
+	elsif(plugin::check_handin(\%itemcount, 12441 => 4)) { #Armor of the Patriarch Quest (part 4 - Patriarch's Claw)
+		quest::say("You are doing very well in your training young patriarch! Wear these leggings proudly. For your next text, you will need to bring me two Sarnak Broodling fangs and two Goblin Hunter javelins. When you have completed this test, I will reward you with the Patriarch's claw. ");
+		quest::summonitem(7829); # Item: Patriarch's Leggings
+		quest::exp(20000);
+		quest::ding();
+		quest::faction(445,20); # Faction: Scaled Mystics
+		quest::faction(441,10); # Faction: Legion of Cabilis
+	}
+	elsif(plugin::check_handin(\%itemcount, 14599 => 2, 12432 => 2)) { #Armor of the Patriarch Quest (part 5 - Patriarch's Leather)
+		quest::say("You have made me proud young patriarch! Here is your Patriarch's claw, which will help you against the dangers you will find in your journeys. Now there is one final task that you will need to complete. For this task, you will need to bring me four froglok tuk buckers. When you have completed this final task, you will indeed be a true Patriarch of Cabilis. ");
+		quest::summonitem(7830); # Item: Patriarch's Claw
+		quest::exp(20000);
+		quest::ding();
+		quest::faction(445,20); # Faction: Scaled Mystics
+		quest::faction(441,10); # Faction: Legion of Cabilis
+	}
+	elsif(plugin::check_handin(\%itemcount, 8999 => 4)) { #Armor of the Patriarch Quest
+		quest::say("Congratulations young Patriarch, you have proven yourself to be worthy of our cause. Wear your armor proudly, as it is the symbol of a true Patriarch of Cabilis. ");
+		quest::summonitem(7831); # Item: Patriarch's Leather
+		quest::exp(20000);
+		quest::ding();
+		quest::faction(445,20); # Faction: Scaled Mystics
+		quest::faction(441,10); # Faction: Legion of Cabilis
+	}
+	elsif(plugin::check_handin(\%itemcount, 48068 => 1)) { #Lativ's Remains - Claw of the Spiritual Elder (#6)
+		quest::say("Are these what I think they are?! How long have you been doing our work from the shadows young one? No matter now you have seen too much as it is. We have been on a search for the four pieces of the [Seal of Choatl].");
+		quest::summonitem(48068); #Lativ's Remains - return for container combine
+		quest::exp(20000);
+		quest::ding();
+		quest::faction(445,20); # Faction: Scaled Mystics
+		quest::faction(441,10); # Faction: Legion of Cabilis
+	}
+	elsif(plugin::check_handin(\%itemcount, 12409 => 1, 12431 => 1, 12428 => 1, 12727 => 1)){ #Claw of the Cub Quest (Claw of the Spiritual Elder Quest Line 1/6)
+		quest::say("You have done well on your way to becoming a great patriarch. Now I must tend to other pressing issues. Take your reward and wear it proudly.");
+		quest::summonitem(48045); # Item: Claw of the Cub
+		quest::exp(80000);
+		quest::ding();
+		quest::faction(445,20); # Faction: Scaled Mystics
+		quest::faction(441,10); # Faction: Legion of Cabilis
+	}
+	elsif (plugin::check_handin(\%itemcount, 18848 => 1)) { #A tattered note
+		quest::say("The Hierophants have sensed that your spirit is strong with obedience inspiring fear! You must learn to harness your [powers] over the scaled wolves! Wear this tunic so that the Legion of Cabilis will recognize you as a Scaled Spiritist."); #Proper text still needed
+		quest::summonitem(13577); #Dusty Green Tunic
+		quest::ding();
+		quest::faction(445,15); #Scaled Mystics
+		quest::faction(441,3); #Legion of Cabilis
+		quest::exp(100);
+	}
+	plugin::try_tome_handins(\%itemcount, $class, 'Beastlord');
+	plugin::return_items(\%itemcount);
+}
+ 
