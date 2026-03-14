@@ -45,6 +45,9 @@ void LoginServer::ProcessUsertoWorldReqLeg(uint16_t opcode, EQ::Net::Packet &p)
 
 	UsertoWorldRequestLegacy *utwr = (UsertoWorldRequestLegacy *) p.Data();
 	uint32                   id    = database.GetAccountIDFromLSID("eqemu", utwr->lsaccountid);
+	if (id == 0 && RuleB(World, EnableLoginserverAccountLinking)) {
+		id = database.GetAccountIDFromLSLink("eqemu", utwr->lsaccountid);
+	}
 	int16                           status = database.GetAccountStatus(id);
 
 	LogDebug(
@@ -125,6 +128,9 @@ void LoginServer::ProcessUsertoWorldReq(uint16_t opcode, EQ::Net::Packet &p)
 
 	UsertoWorldRequest *utwr = (UsertoWorldRequest *) p.Data();
 	uint32             id    = database.GetAccountIDFromLSID(utwr->login, utwr->lsaccountid);
+	if (id == 0 && RuleB(World, EnableLoginserverAccountLinking)) {
+		id = database.GetAccountIDFromLSLink(utwr->login, utwr->lsaccountid);
+	}
 	int16                     status = database.GetAccountStatus(id);
 
 	LogDebug(

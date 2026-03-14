@@ -25,6 +25,7 @@
 #include "common/http/httplib.h"
 #include "common/http/uri.h"
 #include "common/platform/win/include_windows.h"
+#include "common/repositories/account_login_server_links_repository.h"
 #include "common/repositories/account_repository.h"
 #include "common/repositories/adventure_stats_repository.h"
 #include "common/repositories/bot_data_repository.h"
@@ -651,14 +652,14 @@ uint32 Database::GetAccountIDByName(const std::string& account_name, const std::
 
 uint32 Database::GetAccountIDByName(const std::string& account_name, int16* status)
 {
-	if (!isAlphaNumeric(account_name.c_str())) {
+	if (account_name.empty()) {
 		return 0;
 	}
 
 	const auto& l = AccountRepository::GetWhere(
 		*this,
 		fmt::format(
-			"`name` = '{}' LIMIT 1",
+			"LOWER(`name`) = LOWER('{}') LIMIT 1",
 			Strings::Escape(account_name)
 		)
 	);
@@ -969,6 +970,52 @@ bool Database::UpdateAccountLSInfo(uint32 account_id, const std::string& ls_id, 
 	e.lsaccount_id = lsaccount_id;
 
 	return AccountRepository::UpdateOne(*this, e);
+}
+
+uint32 Database::GetAccountIDFromLSLink(
+	const std::string& ls_id,
+	uint32 lsaccount_id,
+	char* account_name,
+	int16* status
+)
+{
+	auto link = AccountLoginServerLinksRepository::FindByLSCredentials(*this, ls_id, lsaccount_id);
+
+	if (!link.account_id) {
+		return 0;
+	}
+
+	auto account = AccountRepository::FindOne(*this, link.account_id);
+
+	if (!account.id) {
+		return 0;
+	}
+
+	if (account_name) {
+		strcpy(account_name, account.name.c_str());
+	}
+
+	if (status) {
+		*status = account.status;
+	}
+
+	return account.id;
+}
+
+bool Database::CreateAccountLSLink(
+	uint32 account_id,
+	const std::string& ls_id,
+	uint32 lsaccount_id,
+	const std::string& login_account_name
+)
+{
+	return AccountLoginServerLinksRepository::CreateLink(
+		*this,
+		account_id,
+		ls_id,
+		lsaccount_id,
+		login_account_name
+	);
 }
 
 void Database::ClearMerchantTemp()

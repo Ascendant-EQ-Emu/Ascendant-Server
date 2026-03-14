@@ -178,6 +178,8 @@ public:
 	);
 	bool CheckAccountIPMatch(uint32 account_id, const std::string& ip);
 	bool UpdateAccountLSInfo(uint32 account_id, const std::string& ls_id, uint32 lsaccount_id);
+	uint32 GetAccountIDFromLSLink(const std::string& ls_id, uint32 lsaccount_id, char* account_name = 0, int16* status = 0);
+	bool CreateAccountLSLink(uint32 account_id, const std::string& ls_id, uint32 lsaccount_id, const std::string& login_account_name);
 
 	uint8 GetAgreementFlag(uint32 account_id);
 	void SetAgreementFlag(uint32 account_id);
