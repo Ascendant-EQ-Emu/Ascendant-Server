@@ -355,6 +355,7 @@ RULE_STRING(World, CustomFilesKey, "", "Enable if the server requires custom fil
 RULE_STRING(World, CustomFilesUrl, "github.com/knervous/eqnexus/releases", "URL to display at character select if client is missing custom files")
 RULE_INT(World, CustomFilesAdminLevel, 20, "Admin level at which custom file key is not required when CustomFilesKey is specified")
 RULE_BOOL(World, RealTimeCalculateGuilds, false, "(Temp feature flag) If true, guilds will be calculated in real time instead of at zone boot. This is a performance hit but allows for more dynamic guilds.")
+RULE_BOOL(World, EnableLoginserverAccountLinking, true, "When enabled, if a loginserver account ID is not found, attempts to link by account name with IP validation from account_ip history")
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Zone)

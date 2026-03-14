@@ -649,6 +649,33 @@ uint32 Database::GetAccountIDByName(const std::string& account_name, const std::
 	return e.id;
 }
 
+uint32 Database::GetAccountIDByName(const std::string& account_name, int16* status)
+{
+	if (!isAlphaNumeric(account_name.c_str())) {
+		return 0;
+	}
+
+	const auto& l = AccountRepository::GetWhere(
+		*this,
+		fmt::format(
+			"`name` = '{}' LIMIT 1",
+			Strings::Escape(account_name)
+		)
+	);
+
+	if (l.empty()) {
+		return 0;
+	}
+
+	auto& e = l.front();
+
+	if (status) {
+		*status = e.status;
+	}
+
+	return e.id;
+}
+
 const std::string Database::GetAccountName(uint32 account_id, uint32* lsaccount_id)
 {
 	const auto& e = AccountRepository::FindOne(*this, account_id);
@@ -916,6 +943,32 @@ uint32 Database::GetAccountIDFromLSID(
 	}
 
 	return e.id;
+}
+
+bool Database::CheckAccountIPMatch(uint32 account_id, const std::string& ip)
+{
+	auto results = QueryDatabase(
+		fmt::format(
+			"SELECT `accid` FROM `account_ip` WHERE `accid` = {} AND `ip` = '{}' LIMIT 1",
+			account_id,
+			Strings::Escape(ip)
+		)
+	);
+
+	return results.RowCount() > 0;
+}
+
+bool Database::UpdateAccountLSInfo(uint32 account_id, const std::string& ls_id, uint32 lsaccount_id)
+{
+	auto e = AccountRepository::FindOne(*this, account_id);
+	if (!e.id) {
+		return false;
+	}
+
+	e.ls_id        = ls_id;
+	e.lsaccount_id = lsaccount_id;
+
+	return AccountRepository::UpdateOne(*this, e);
 }
 
 void Database::ClearMerchantTemp()

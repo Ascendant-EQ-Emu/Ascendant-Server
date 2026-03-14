@@ -3521,7 +3521,7 @@ int Mob::GetHandToHandDamage(void)
 		if (IsClient() && GetLevel() > 50) {
 			const auto hands = CastToClient()->GetItemIDAt(12);
 			if (hands == 10652)  return 9;   // original epic
-			if (hands == 710652) return 10;  // ascendant epic (recommended)
+			if (hands == 710652) return 13;  // ascendant epic (recommended)
 		}
 		if (level > 62)
 			return 15;
@@ -3588,7 +3588,7 @@ int Mob::GetHandToHandDelay(void)
 				return 16;   // original epic
 
 			if (hands == 710652)
-				return 15;   // ascendant epic (recommended)
+				return 14;   // ascendant epic (recommended)
 		}
 		// Have a look to see if we have epic fists on
 		// if (IsClient() && CastToClient()->GetItemIDAt(12) == 10652 && GetLevel() > 50)

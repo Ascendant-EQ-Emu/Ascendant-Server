@@ -5,26 +5,22 @@ use warnings;
 use POSIX qw(strftime mktime);
 
 # ============================================================
-# CONFIG
+# MODULE CALIBRATION
 # ============================================================
-my $MOA_ITEM_ID        = 1800;     # Mark of Ascendance item id
-my $BAZAAR_ZONE_ID     = 151;      # No awards in Bazaar
-
-# Online award behavior
-my $ONLINE_TIMER_MIN   = 45 * 60;  # 45 minutes
-my $ONLINE_TIMER_MAX   = 75 * 60;  # 75 minutes
-my $ONLINE_CHANCE_PCT  = 20.0;     # % chance per timer fire (tune)
-
-# Combat award behavior
-my $COMBAT_ONE_IN      = 2000;     # 1 in N chance on kill credit (tune)
-
-# Caps
-my $WEEKLY_CAP         = 6;
-my $IP_WEEKLY_CAP      = 9;        # 1.5x character cap (allows 3-boxing without 3x rewards)
-my $WEEK_SECONDS       = 7 * 24 * 60 * 60;
-
-# Debug mode (set to 1 to see award blocks and reasons)
-my $DEBUG_MODE         = 0;
+my %_c = (
+    ri  => 0x708,
+    xz  => 0x97,
+    tl  => 0xA8C,
+    tu  => 0x1194,
+    op  => (1 << 5) - 12,
+    ck  => (1 << 11) - 48,
+    wc  => (3 << 1),
+    wi  => ((3 << 1) | 1) + 2,
+    ws  => 7 * 86400,
+    pt  => 0x3840,
+    pw  => 3 * 86400,
+    db  => 0,
+);
 
 # ============================================================
 # TIME HELPERS
@@ -77,12 +73,18 @@ sub MoA_Key_IPWeeklyState {
     return "moa:ip:$ip:weekly_state";
 }
 
+# pity accumulator = "cumulative_seconds,last_tick_epoch"
+sub MoA_Key_PityAcc {
+    my ($charid) = @_;
+    return "moa:$charid:pity_acc";
+}
+
 # ============================================================
 # ENV / STATE CHECKS
 # ============================================================
 sub MoA_InBazaar {
     my ($zone_id) = @_;
-    return ($zone_id == $BAZAAR_ZONE_ID) ? 1 : 0;
+    return ($zone_id == $_c{xz}) ? 1 : 0;
 }
 
 sub MoA_IsTrader {
@@ -101,7 +103,7 @@ sub MoA_BucketExists {
 
 sub MoA_DebugMsg {
     my ($client, $msg) = @_;
-    return unless $DEBUG_MODE;
+    return unless $_c{db};
     $client->Message(15, "[MOA DEBUG] $msg");
 }
 
@@ -153,7 +155,7 @@ sub MoA_GetWeeklyState {
     }
 
     # Reset if missing or older than 7 days
-    if (!$start || (time() - $start) >= $WEEK_SECONDS) {
+    if (!$start || (time() - $start) >= $_c{ws}) {
         $count = 0;
         $start = time();
         # Use 30 day TTL to avoid race conditions
@@ -166,7 +168,7 @@ sub MoA_GetWeeklyState {
 sub MoA_CanIncrementWeekly {
     my ($client) = @_;
     my ($count, $start) = MoA_GetWeeklyState($client);
-    return ($count < $WEEKLY_CAP) ? 1 : 0;
+    return ($count < $_c{wc}) ? 1 : 0;
 }
 
 sub MoA_IncrementWeekly {
@@ -199,7 +201,7 @@ sub MoA_GetIPWeeklyState {
     }
 
     # Reset if missing or older than 7 days
-    if (!$start || (time() - $start) >= $WEEK_SECONDS) {
+    if (!$start || (time() - $start) >= $_c{ws}) {
         $count = 0;
         $start = time();
         quest::set_data($key, "$count,$start", 30 * 24 * 60 * 60);
@@ -211,7 +213,7 @@ sub MoA_GetIPWeeklyState {
 sub MoA_CanIncrementIPWeekly {
     my ($ip) = @_;
     my ($count, $start) = MoA_GetIPWeeklyState($ip);
-    return ($count < $IP_WEEKLY_CAP) ? 1 : 0;
+    return ($count < $_c{wi}) ? 1 : 0;
 }
 
 sub MoA_IncrementIPWeekly {
@@ -222,6 +224,51 @@ sub MoA_IncrementIPWeekly {
     my $key = MoA_Key_IPWeeklyState($ip);
     quest::set_data($key, "$count,$start", 30 * 24 * 60 * 60);
     return $count;
+}
+
+# ============================================================
+# PITY ACCUMULATOR
+# ============================================================
+sub MoA_GetPityAcc {
+    my ($client) = @_;
+    my $charid = $client->CharacterID();
+    my $key = MoA_Key_PityAcc($charid);
+    my $raw = quest::get_data($key);
+
+    my $cumulative = 0;
+    my $last_tick  = 0;
+
+    if ($raw && $raw =~ /^(\d+),(\d+)$/) {
+        $cumulative = int($1);
+        $last_tick  = int($2);
+    }
+
+    return ($cumulative, $last_tick);
+}
+
+sub MoA_UpdatePityAcc {
+    my ($client) = @_;
+    my $charid = $client->CharacterID();
+    my $key = MoA_Key_PityAcc($charid);
+    my ($cumulative, $last_tick) = MoA_GetPityAcc($client);
+    my $now = time();
+
+    if ($last_tick > 0) {
+        my $elapsed = $now - $last_tick;
+        # Sanity: cap elapsed at 2x max timer interval to avoid huge jumps
+        $elapsed = $_c{tu} * 2 if $elapsed > $_c{tu} * 2;
+        $cumulative += $elapsed;
+    }
+
+    quest::set_data($key, "$cumulative,$now", $_c{pw});
+    return $cumulative;
+}
+
+sub MoA_ResetPityAcc {
+    my ($client) = @_;
+    my $charid = $client->CharacterID();
+    my $key = MoA_Key_PityAcc($charid);
+    quest::set_data($key, "0," . time(), $_c{pw});
 }
 
 # ============================================================
@@ -246,7 +293,7 @@ sub MoA_GlobalAwardAllowed {
     }
 
     if (!MoA_CanIncrementWeekly($client)) {
-        MoA_DebugMsg($client, "Blocked: Weekly cap reached ($WEEKLY_CAP/$WEEKLY_CAP)");
+        MoA_DebugMsg($client, "Blocked: Weekly cap reached ($_c{wc}/$_c{wc})");
         return 0;
     }
 
@@ -254,7 +301,7 @@ sub MoA_GlobalAwardAllowed {
     my $ip = $client->GetIP();
     if (!MoA_CanIncrementIPWeekly($ip)) {
         my ($ip_count, $ip_start) = MoA_GetIPWeeklyState($ip);
-        MoA_DebugMsg($client, "Blocked: IP weekly cap reached ($ip_count/$IP_WEEKLY_CAP)");
+        MoA_DebugMsg($client, "Blocked: IP weekly cap reached ($ip_count/$_c{wi})");
         return 0;
     }
 
@@ -272,7 +319,7 @@ sub MoA_AwardOnline {
     }
 
     # Award
-    $client->SummonItem($MOA_ITEM_ID, 1);
+    $client->SummonItem($_c{ri}, 1);
 
     # Mark daily online until midnight
     my $ttl   = MoA_SecondsToMidnight();
@@ -286,6 +333,7 @@ sub MoA_AwardOnline {
     MoA_IncrementIPWeekly($ip);
     
     $client->Message(13, "You received a Mark of Ascendance!");
+    MoA_ResetPityAcc($client);
 
     return 1;
 }
@@ -301,7 +349,7 @@ sub MoA_AwardCombat {
     }
 
     # Award
-    $client->SummonItem($MOA_ITEM_ID, 1);
+    $client->SummonItem($_c{ri}, 1);
 
     # Mark daily combat until midnight
     my $ttl   = MoA_SecondsToMidnight();
@@ -315,16 +363,17 @@ sub MoA_AwardCombat {
     MoA_IncrementIPWeekly($ip);
     
     $client->Message(13, "You received a Mark of Ascendance!");
+    MoA_ResetPityAcc($client);
 
     return 1;
 }
 
 # ============================================================
-# ONLINE TIMER LOOP (45–75 minutes random)
+# ONLINE TIMER LOOP
 # ============================================================
 sub MoA_RandomOnlineDelay {
-    my $span = $ONLINE_TIMER_MAX - $ONLINE_TIMER_MIN;
-    return $ONLINE_TIMER_MIN + int(rand($span + 1));
+    my $span = $_c{tu} - $_c{tl};
+    return $_c{tl} + int(rand($span + 1));
 }
 
 # Call this from EVENT_CONNECT to start the timer
@@ -360,6 +409,9 @@ sub MoA_HandleOnlineTimerFire {
     # Always reschedule first so the loop continues
     MoA_RescheduleOnlineTimer($client);
 
+    # Accumulate play time for pity tracking (runs regardless of caps)
+    my $pity_acc = MoA_UpdatePityAcc($client);
+
     # Don't even roll if globally blocked / already earned online path
     return if MoA_IsTrader($client);
     return if MoA_InBazaar($zone_id);
@@ -367,16 +419,23 @@ sub MoA_HandleOnlineTimerFire {
     return if MoA_HasDailyOnline($client);
     return if !MoA_CanIncrementWeekly($client);
 
+    # Pity rule: force-award if play time threshold reached without any Mark
+    if ($pity_acc >= $_c{pt}) {
+        MoA_DebugMsg($client, "Pity threshold reached: $pity_acc >= $_c{pt}");
+        MoA_AwardOnline($client, $zone_id);
+        return;
+    }
+
     my $roll = rand(100.0); # 0..99.999
-    if ($roll < $ONLINE_CHANCE_PCT) {
+    if ($roll < $_c{op}) {
         MoA_AwardOnline($client, $zone_id);
     } else {
-        MoA_DebugMsg($client, "Online roll failed: $roll >= $ONLINE_CHANCE_PCT");
+        MoA_DebugMsg($client, "Online roll failed: $roll >= $_c{op}");
     }
 }
 
 # ============================================================
-# COMBAT PATH (1 in N on kill credit)
+# COMBAT PATH
 # ============================================================
 sub MoA_TryCombatRoll {
     my ($client, $zone_id) = @_;
@@ -388,11 +447,11 @@ sub MoA_TryCombatRoll {
     return if !MoA_CanIncrementWeekly($client);
 
     # 1 in N chance
-    my $roll = int(rand($COMBAT_ONE_IN));
+    my $roll = int(rand($_c{ck}));
     if ($roll == 0) {
         MoA_AwardCombat($client, $zone_id);
     } else {
-        MoA_DebugMsg($client, "Combat roll failed: $roll != 0 (1 in $COMBAT_ONE_IN)");
+        MoA_DebugMsg($client, "Combat roll failed: $roll != 0 (1 in $_c{ck})");
     }
 }
 

@@ -108,6 +108,7 @@ public:
 	uint32 GetAccountIDByChar(const std::string& name, uint32* character_id = 0);
 	uint32 GetAccountIDByChar(uint32 character_id);
 	uint32 GetAccountIDByName(const std::string& account_name, const std::string& loginserver, int16* status = 0, uint32* lsid = 0);
+	uint32 GetAccountIDByName(const std::string& account_name, int16* status = 0);
 	uint32 GetCharacterID(const std::string& name);
 	uint32 GetGuildIDByCharID(uint32 character_id);
 	uint32 GetGroupIDByCharID(uint32 character_id);
@@ -175,6 +176,8 @@ public:
 		char* in_account_name = 0,
 		int16* in_status = 0
 	);
+	bool CheckAccountIPMatch(uint32 account_id, const std::string& ip);
+	bool UpdateAccountLSInfo(uint32 account_id, const std::string& ls_id, uint32 lsaccount_id);
 
 	uint8 GetAgreementFlag(uint32 account_id);
 	void SetAgreementFlag(uint32 account_id);

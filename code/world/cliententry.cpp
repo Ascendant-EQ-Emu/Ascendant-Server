@@ -7,6 +7,7 @@
 #include "world/world_config.h"
 #include "world/worlddb.h"
 #include "world/zoneserver.h"
+#include "common/misc.h"
 
 extern uint32            numplayers;
 extern volatile bool     RunLoops;
@@ -315,26 +316,57 @@ bool ClientListEntry::CheckAuth(uint32 loginserver_account_id, const char *key_p
 
 		// create account if it doesn't exist
 		if (m_account_id == 0 && LSID() > 0) {
-			int16 default_account_status = WorldConfig::get()->DefaultStatus;
+			if (RuleB(World, EnableLoginserverAccountLinking)) {
+				int16  found_status = 0;
+				uint32 found_id = database.GetAccountIDByName(m_login_account_name, &found_status);
 
-			m_account_id = database.CreateAccount(
-				m_login_account_name,
-				std::string(),
-				default_account_status,
-				m_source_loginserver,
-				LSID()
-			);
-
-			if (!m_account_id) {
-				LogError(
-					"Error adding local account for LS login [{}] [{}], duplicate name",
-					m_source_loginserver,
-					m_login_account_name
-				);
-				return false;
+				if (found_id > 0) {
+					std::string connecting_ip = long2ip(m_ip_address);
+					if (database.CheckAccountIPMatch(found_id, connecting_ip)) {
+						database.UpdateAccountLSInfo(found_id, m_source_loginserver, LSID());
+						m_account_id = found_id;
+						m_admin = found_status;
+						strn0cpy(m_account_name, m_login_account_name, sizeof(m_account_name));
+						LogInfo(
+							"Linked login [{}] to existing account id [{}] via IP-validated name match from loginserver [{}]",
+							m_login_account_name,
+							m_account_id,
+							m_source_loginserver
+						);
+					}
+					else {
+						LogWarning(
+							"Account link rejected for [{}] id [{}] - IP [{}] not found in account_ip history",
+							m_login_account_name,
+							found_id,
+							long2ip(m_ip_address)
+						);
+					}
+				}
 			}
-			strn0cpy(m_account_name, m_login_account_name, sizeof(m_account_name));
-			m_admin = default_account_status;
+
+			if (m_account_id == 0) {
+				int16 default_account_status = WorldConfig::get()->DefaultStatus;
+
+				m_account_id = database.CreateAccount(
+					m_login_account_name,
+					std::string(),
+					default_account_status,
+					m_source_loginserver,
+					LSID()
+				);
+
+				if (!m_account_id) {
+					LogError(
+						"Error adding local account for LS login [{}] [{}], duplicate name",
+						m_source_loginserver,
+						m_login_account_name
+					);
+					return false;
+				}
+				strn0cpy(m_account_name, m_login_account_name, sizeof(m_account_name));
+				m_admin = default_account_status;
+			}
 		}
 		std::string lsworldadmin;
 		if (database.GetVariable("honorlsworldadmin", lsworldadmin)) {

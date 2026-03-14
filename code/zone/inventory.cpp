@@ -2077,6 +2077,20 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 	}
 	else {
 		// Not dealing with charges - just do direct swap
+		EQ::InventoryProfile::SwapItemFailState fail_state = EQ::InventoryProfile::swapInvalid;
+		if (!m_inv.SwapItem(src_slot_id, dst_slot_id, fail_state, GetBaseRace(), GetBaseClass(), GetDeity(), GetLevel())) {
+			const char* fail_message = "The selected slot was invalid.";
+			if (fail_state == EQ::InventoryProfile::swapRaceClass || fail_state == EQ::InventoryProfile::swapDeity)
+				fail_message = "Your class, deity and/or race may not equip that item.";
+			else if (fail_state == EQ::InventoryProfile::swapLevel)
+				fail_message = "You are not sufficient level to use this item.";
+
+			if (fail_message)
+				Message(Chat::Red, "%s", fail_message);
+
+			return false;
+		}
+
 		if (src_inst && (dst_slot_id <= EQ::invslot::EQUIPMENT_END) && dst_slot_id >= EQ::invslot::EQUIPMENT_BEGIN) {
 			if (src_inst->GetItem()->Attuneable) {
 				src_inst->SetAttuned(true);
@@ -2091,20 +2105,6 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 				}
 			}
 			SetMaterial(dst_slot_id,src_inst->GetItem()->ID);
-		}
-
-		EQ::InventoryProfile::SwapItemFailState fail_state = EQ::InventoryProfile::swapInvalid;
-		if (!m_inv.SwapItem(src_slot_id, dst_slot_id, fail_state, GetBaseRace(), GetBaseClass(), GetDeity(), GetLevel())) {
-			const char* fail_message = "The selected slot was invalid.";
-			if (fail_state == EQ::InventoryProfile::swapRaceClass || fail_state == EQ::InventoryProfile::swapDeity)
-				fail_message = "Your class, deity and/or race may not equip that item.";
-			else if (fail_state == EQ::InventoryProfile::swapLevel)
-				fail_message = "You are not sufficient level to use this item.";
-
-			if (fail_message)
-				Message(Chat::Red, "%s", fail_message);
-
-			return false;
 		}
 
 		LogInventory("Moving entire item from slot [{}] to slot [{}]", src_slot_id, dst_slot_id);
