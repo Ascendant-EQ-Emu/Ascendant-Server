@@ -2977,7 +2977,7 @@ void Client::BuyTraderItemOutsideBazaar(TraderBuy_Struct *tbs, const EQApplicati
 				"You already have a lore {} ({}). You cannot purchase another to be parceled.",
 				buy_item->GetItem()->Name,
 				buy_item->GetItem()->ID
-			)
+			).c_str()
 		);
 		in->method     = BazaarByParcel;
 		in->sub_action = Failed;
