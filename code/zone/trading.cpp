@@ -2969,6 +2969,23 @@ void Client::BuyTraderItemOutsideBazaar(TraderBuy_Struct *tbs, const EQApplicati
 		buy_item->GetCharges() ? fmt::format("with {} charges", buy_item->GetCharges()) : ""
 	);
 
+	// Reject parcel purchase if buyer already has this lore item (would create duplicate when parcel is retrieved)
+	if (!RuleB(Items, DisableLore) && CheckLoreConflict(buy_item->GetItem())) {
+		Message(
+			Chat::Red,
+			fmt::format(
+				"You already have a lore {} ({}). You cannot purchase another to be parceled.",
+				buy_item->GetItem()->Name,
+				buy_item->GetItem()->ID
+			)
+		);
+		in->method     = BazaarByParcel;
+		in->sub_action = Failed;
+		TraderRepository::UpdateActiveTransaction(database, trader_item.id, false);
+		TradeRequestFailed(app);
+		return;
+	}
+
 	uint64 total_cost = static_cast<uint64>(tbs->price) * static_cast<uint64>(tbs->quantity);
 	if (total_cost > MAX_TRANSACTION_VALUE) {
 		Message(
