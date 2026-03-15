@@ -132,6 +132,38 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+  # Spire - web admin and content editor
+  spire:
+    build:
+      context: ./docker/spire
+    volumes:
+      - ./docker/eqemu_config.json:/home/eqemu/server/eqemu_config.json:ro
+    ports:
+      - "3010:3010"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Automated database backups
+  backup:
+    build:
+      context: ./docker/backup
+    volumes:
+      - backup_data:/backups
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: "3306"
+      DB_USER: ${MYSQL_USER:-eqemu}
+      DB_PASS: ${MYSQL_PASSWORD:-eqemu}
+      DB_NAME: ${MYSQL_DATABASE:-peq}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 */6 * * *}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   db_data:
   shared_data:
@@ -140,3 +172,4 @@ volumes:
   login_logs:
   ucs_logs:
   queryserv_logs:
+  backup_data:
