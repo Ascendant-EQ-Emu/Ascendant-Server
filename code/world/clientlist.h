@@ -55,7 +55,7 @@ public:
 	ClientListEntry* FindCharacter(const char* name);
 	ClientListEntry* FindCLEByAccountID(uint32 iAccID);
 	ClientListEntry* FindCLEByCharacterID(uint32 iCharID);
-	void	GetCLEIP(uint32 in_ip);
+	void	GetCLEIP(uint32 in_ip, uint32 in_account_id);
 	void	DisconnectByIP(uint32 in_ip);
 	void	CLCheckStale();
 	void	CLEKeepAlive(uint32 numupdates, uint32* wid);

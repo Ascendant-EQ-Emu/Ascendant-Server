@@ -94,9 +94,41 @@ void ClientList::CLERemoveZSRef(ZoneServer* iZS) {
 
 //Check current CLE Entry IPs against incoming connection
 
-void ClientList::GetCLEIP(uint32 in_ip) {
+void ClientList::GetCLEIP(uint32 in_ip, uint32 in_account_id) {
 	ClientListEntry* cle = nullptr;
 	LinkedListIterator<ClientListEntry*> iterator(clientlist);
+
+	// Pre-pass: if IPLimitDisconnectSameAccount is enabled, evict any existing
+	// sessions for the same account on this IP before counting. This handles the
+	// common crash-reconnect case without disrupting other accounts on the same IP.
+	if (RuleB(World, IPLimitDisconnectSameAccount) && in_account_id > 0) {
+		iterator.Reset();
+		while (iterator.MoreElements()) {
+			cle = iterator.GetData();
+			if (cle->GetIP() == in_ip && cle->AccountID() == in_account_id) {
+				auto ip_string = long2ip(cle->GetIP());
+				LogClientLogin(
+					"IPLimitDisconnectSameAccount: Evicting stale session for Account ID [{}] Account Name [{}] on IP [{}]",
+					cle->AccountID(),
+					cle->LSName(),
+					ip_string
+				);
+				if (strlen(cle->name())) {
+					auto pack = new ServerPacket(ServerOP_KickPlayer, sizeof(ServerKickPlayer_Struct));
+					auto skp = (ServerKickPlayer_Struct*) pack->pBuffer;
+					strn0cpy(skp->adminname, "SessionLimit", sizeof(skp->adminname));
+					strn0cpy(skp->name, cle->name(), sizeof(skp->name));
+					skp->adminrank = 255;
+					ZSList::Instance()->SendPacket(pack);
+					safe_delete(pack);
+				}
+				cle->SetOnline(CLE_Status::Offline);
+				iterator.RemoveCurrent();
+				continue;
+			}
+			iterator.Advance();
+		}
+	}
 
 	int count = 0;
 	iterator.Reset();
