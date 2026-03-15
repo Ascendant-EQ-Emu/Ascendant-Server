@@ -40,6 +40,45 @@ class QueryServ;
 extern WorldServer worldserver;
 extern QueryServ* QServ;
 
+static bool HasLoreConflictInPendingParcels(Client *client, const Item_Struct *item)
+{
+	if (!client || !item) {
+		return false;
+	}
+
+	// Only lore-flagged items are relevant for this check
+	if (!item->Lore || item->Lore[0] == '\0') {
+		return false;
+	}
+
+	uint32 char_id = client->CharacterID();
+	if (!char_id) {
+		return false;
+	}
+
+	std::string query = StringFormat(
+		"SELECT 1 FROM character_parcels "
+		"WHERE char_id = %u AND item_id = %u AND deleted_at IS NULL LIMIT 1",
+		char_id,
+		item->ID
+	);
+
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		LogTrading(
+			"Failed to query character_parcels for lore conflict check for char_id [{}], item_id [{}]: {}",
+			char_id,
+			item->ID,
+			results.ErrorMessage().c_str()
+		);
+
+		// Fail open: do not block the purchase due to a transient DB issue
+		return false;
+	}
+
+	return results.RowCount() > 0;
+}
+
 // The maximum amount of a single bazaar/barter transaction expressed in copper.
 // Equivalent to 2 Million plat
 constexpr auto MAX_TRANSACTION_VALUE = 2000000000;
@@ -2969,21 +3008,29 @@ void Client::BuyTraderItemOutsideBazaar(TraderBuy_Struct *tbs, const EQApplicati
 		buy_item->GetCharges() ? fmt::format("with {} charges", buy_item->GetCharges()) : ""
 	);
 
-	// Reject parcel purchase if buyer already has this lore item (would create duplicate when parcel is retrieved)
-	if (!RuleB(Items, DisableLore) && CheckLoreConflict(buy_item->GetItem())) {
-		Message(
-			Chat::Red,
-			fmt::format(
-				"You already have a lore {} ({}). You cannot purchase another to be parceled.",
-				buy_item->GetItem()->Name,
-				buy_item->GetItem()->ID
-			).c_str()
-		);
-		in->method     = BazaarByParcel;
-		in->sub_action = Failed;
-		TraderRepository::UpdateActiveTransaction(database, trader_item.id, false);
-		TradeRequestFailed(app);
-		return;
+	// Reject parcel purchase if buyer already has this lore item, either in inventory/bank or pending parcels
+	if (!RuleB(Items, DisableLore)) {
+		bool lore_conflict = CheckLoreConflict(buy_item->GetItem());
+
+		if (!lore_conflict && owner && owner->IsClient()) {
+			lore_conflict = HasLoreConflictInPendingParcels(owner->CastToClient(), buy_item->GetItem());
+		}
+
+		if (lore_conflict) {
+			Message(
+				Chat::Red,
+				fmt::format(
+					"You already have a lore {} ({}). You cannot purchase another to be parceled.",
+					buy_item->GetItem()->Name,
+					buy_item->GetItem()->ID
+				)
+			);
+			in->method     = BazaarByParcel;
+			in->sub_action = Failed;
+			TraderRepository::UpdateActiveTransaction(database, trader_item.id, false);
+			TradeRequestFailed(app);
+			return;
+		}
 	}
 
 	uint64 total_cost = static_cast<uint64>(tbs->price) * static_cast<uint64>(tbs->quantity);
