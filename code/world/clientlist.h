@@ -64,6 +64,7 @@ public:
 	bool    IsAccountInGame(uint32 iLSID);
 
 	int GetClientCount();
+	int32 GetClientCountForLoginServer();
 	void GetClients(const char *zone_name, std::vector<ClientListEntry *> &into);
 
 	void GetClientList(Json::Value &response, bool full_list = false);

@@ -4393,8 +4393,10 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			}
 
 			case SpellEffect::Familiar:
+			{
 				// Do not dismiss pet when familiar buff fades; pet stays until /pet get lost or death
 				break;
+			}
 
 			case SpellEffect::Mez:
 			{
