@@ -273,6 +273,7 @@ public:
 	int32 GetSkillAttackProc(int idx) const;
 	int32 GetSlayUndead(int idx) const;
 	int32 GetGiveDoubleRiposte(int idx) const;
+	int GetGiveDoubleRiposteSkillPairCount() const;
 	uint32 GetRaiseSkillCap(int idx) const;
 	int32 GetSEResist(int idx) const;
 	int32 GetFinishingBlow(int idx) const;

@@ -48,6 +48,7 @@ namespace Archetype {
 
 #define AURA_HARDCAP		2
 #define WEAPON_STANCE_TYPE_MAX 2
+#define MAX_RIPOSTE_SKILL_PAIRS 8
 
 
 #define SHIELD_ABILITY_RECAST_TIME 180
@@ -535,7 +536,8 @@ struct StatBonuses {
 	int32	PetAvoidance;						// Pet avoidance chance.
 	int32	CombatStability;					// Melee damage mitigation.
 	int32	DoubleRiposte;						// Chance to double riposte
-	int32	GiveDoubleRiposte[3];				// 0=Regular Chance, 1=Skill Attack Chance, 2=Skill
+	// 0=Regular Chance; [1+2*i]=chance, [2+2*i]=skill for each riposte-with-skill pair (e.g. Return Kick). Up to MAX_RIPOSTE_SKILL_PAIRS pairs.
+	int32	GiveDoubleRiposte[1 + 2 * MAX_RIPOSTE_SKILL_PAIRS];
 	uint32	RaiseSkillCap[EQ::skills::HIGHEST_SKILL + 1];		// Raise a specific skill cap (base1= value, base2=skill)
 	int32	Ambidexterity;						// Increase chance to duel wield by adding bonus 'skill'.
 	int32	PetMaxHP;							// Increase the max hp of your pet.
@@ -629,9 +631,11 @@ namespace SBIndex {
 	constexpr uint16 SKILLATK_PROC_SKILL                    = 2; // SPA 288
 	constexpr uint16 SLAYUNDEAD_DMG_MOD                     = 0; // SPA 219
 	constexpr uint16 SLAYUNDEAD_RATE_MOD                    = 1; // SPA 219
-	constexpr uint16 DOUBLE_RIPOSTE_CHANCE                  = 0; // SPA 223
-	constexpr uint16 DOUBLE_RIPOSTE_SKILL_ATK_CHANCE        = 1; // SPA 223
-	constexpr uint16 DOUBLE_RIPOSTE_SKILL                   = 2; // SPA 223
+	constexpr uint16 DOUBLE_RIPOSTE_CHANCE                  = 0; // SPA 224 slot 0 = regular chance
+	constexpr uint16 DOUBLE_RIPOSTE_SKILL_ATK_CHANCE        = 1; // SPA 224 first pair chance (backward compat)
+	constexpr uint16 DOUBLE_RIPOSTE_SKILL                   = 2; // SPA 224 first pair skill (backward compat)
+	constexpr uint16 DOUBLE_RIPOSTE_SKILL_PAIR_STRIDE      = 2; // each pair is (chance, skill)
+	constexpr uint16 MAX_RIPOSTE_SKILL_PAIRS              = 8; // max (chance, skill) pairs for riposte-with-skill AAs
 	constexpr uint16 FINISHING_EFFECT_PROC_CHANCE           = 0; // SPA 278, 439, 217
 	constexpr uint16 FINISHING_EFFECT_DMG                   = 1; // SPA 278, 439, 217
 	constexpr uint16 FINISHING_EFFECT_LEVEL_MAX             = 0; // SPA 440, 345, 346

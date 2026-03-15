@@ -1251,6 +1251,16 @@ int32 Lua_StatBonuses::GetGiveDoubleRiposte(int idx) const {
 	return self->GiveDoubleRiposte[idx];
 }
 
+int Lua_StatBonuses::GetGiveDoubleRiposteSkillPairCount() const {
+	Lua_Safe_Call_Int();
+	int count = 0;
+	for (uint16 i = 0; i < SBIndex::MAX_RIPOSTE_SKILL_PAIRS; ++i) {
+		if (self->GiveDoubleRiposte[1 + 2 * i] != 0)
+			++count;
+	}
+	return count;
+}
+
 uint32 Lua_StatBonuses::GetRaiseSkillCap(int idx) const {
 	Lua_Safe_Call_Int();
 	return self->RaiseSkillCap[idx];
@@ -1400,6 +1410,7 @@ luabind::scope lua_register_stat_bonuses() {
 	.def("FrontalStunResist", &Lua_StatBonuses::GetFrontalStunResist)
 	.def("GiveDoubleAttack", &Lua_StatBonuses::GetGiveDoubleAttack)
 	.def("GiveDoubleRiposte", &Lua_StatBonuses::GetGiveDoubleRiposte)
+	.def("GiveDoubleRiposteSkillPairCount", &Lua_StatBonuses::GetGiveDoubleRiposteSkillPairCount)
 	.def("GivePetGroupTarget", &Lua_StatBonuses::GetGivePetGroupTarget)
 	.def("GravityEffect", &Lua_StatBonuses::GetGravityEffect)
 	.def("haste", &Lua_StatBonuses::Gethaste)

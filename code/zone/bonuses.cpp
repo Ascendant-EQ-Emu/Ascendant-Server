@@ -1235,17 +1235,22 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 		}
 
 		case SpellEffect::GiveDoubleRiposte: {
-			// 0=Regular Riposte 1=Skill Attack Riposte 2=Skill
+			// 0=Regular Riposte chance (take max). Pairs (chance, skill) for riposte-with-skill AAs append to list.
 			if (limit_value == 0) {
 				if (newbon->GiveDoubleRiposte[SBIndex::DOUBLE_RIPOSTE_CHANCE] < base_value)
 					newbon->GiveDoubleRiposte[SBIndex::DOUBLE_RIPOSTE_CHANCE] = base_value;
 			}
-			// Only for special attacks.
-			else if (limit_value > 0 && (newbon->GiveDoubleRiposte[SBIndex::DOUBLE_RIPOSTE_SKILL_ATK_CHANCE] < base_value)) {
-				newbon->GiveDoubleRiposte[SBIndex::DOUBLE_RIPOSTE_SKILL_ATK_CHANCE] = base_value;
-				newbon->GiveDoubleRiposte[SBIndex::DOUBLE_RIPOSTE_SKILL]            = limit_value;
+			// Append (chance, skill) for special attacks (Return Kick, Furious Refrain, etc.); respect cap.
+			else if (limit_value > 0) {
+				for (int i = 0; i < static_cast<int>(SBIndex::MAX_RIPOSTE_SKILL_PAIRS); ++i) {
+					int idx = 1 + 2 * i;
+					if (newbon->GiveDoubleRiposte[idx] == 0) {
+						newbon->GiveDoubleRiposte[idx]     = base_value;
+						newbon->GiveDoubleRiposte[idx + 1] = limit_value;
+						break;
+					}
+				}
 			}
-
 			break;
 		}
 
@@ -5339,7 +5344,11 @@ void Mob::NegateSpellEffectBonuses(uint16 spell_id)
 				case SpellEffect::GiveDoubleRiposte:
 					if (negate_spellbonus) { spellbonuses.GiveDoubleRiposte[SBIndex::DOUBLE_RIPOSTE_CHANCE] = effect_value; }
 					if (negate_itembonus) { itembonuses.GiveDoubleRiposte[SBIndex::DOUBLE_RIPOSTE_CHANCE] = effect_value; }
-					if (negate_aabonus) { aabonuses.GiveDoubleRiposte[SBIndex::DOUBLE_RIPOSTE_CHANCE] = effect_value; }
+					if (negate_aabonus) {
+						aabonuses.GiveDoubleRiposte[SBIndex::DOUBLE_RIPOSTE_CHANCE] = effect_value;
+						for (uint16 i = 1; i < sizeof(aabonuses.GiveDoubleRiposte) / sizeof(aabonuses.GiveDoubleRiposte[0]); ++i)
+							aabonuses.GiveDoubleRiposte[i] = 0;
+					}
 					break;
 
 				case SpellEffect::SlayUndead:

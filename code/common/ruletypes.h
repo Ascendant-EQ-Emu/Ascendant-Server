@@ -624,6 +624,7 @@ RULE_BOOL(Combat, Classic2HBAnimation, false, "2HB will use the 2 hand piercing 
 RULE_BOOL(Combat, ArcheryConsumesAmmo, true, "Set to false to disable Archery Ammo Consumption")
 RULE_BOOL(Combat, ThrowingConsumesAmmo, true, "Set to false to disable Throwing Ammo Consumption")
 RULE_BOOL(Combat, UseLiveRiposteMechanics, false, "Set to true to disable SPA 173 SpellEffect::RiposteChance from making those with the effect on them immune to enrage, can longer riposte from a riposte.")
+RULE_BOOL(Combat, RiposteAASkillStacking, true, "When true, multiple riposte-with-skill AAs (Return Kick, Furious Refrain, Knave's Return Strike, Knight's Return Strike) stack; when false, only the first pair is used (classic single-skill behavior).")
 RULE_INT(Combat, FrontalStunImmunityClasses, 0, "Bitmask for Classes than have frontal stun immunity, No Races (0) by default.")
 RULE_BOOL(Combat, NPCsUseFrontalStunImmunityClasses, false, "Enable or disable NPCs using frontal stun immunity Classes from Combat:FrontalStunImmunityClasses, false by default.")
 RULE_INT(Combat, FrontalStunImmunityRaces, 512, "Bitmask for Races than have frontal stun immunity, Ogre (512) only by default.")

@@ -1246,6 +1246,16 @@ int32 Perl_StatBonuses_GetGiveDoubleRiposte(StatBonuses* self, int slot)
 	return self->GiveDoubleRiposte[slot];
 }
 
+int Perl_StatBonuses_GetGiveDoubleRiposteSkillPairCount(StatBonuses* self)
+{
+	int count = 0;
+	for (int i = 0; i < static_cast<int>(SBIndex::MAX_RIPOSTE_SKILL_PAIRS); ++i) {
+		if (self->GiveDoubleRiposte[1 + 2 * i] != 0)
+			++count;
+	}
+	return count;
+}
+
 uint32 Perl_StatBonuses_GetRaiseSkillCap(StatBonuses* self, int slot)
 {
 	return self->RaiseSkillCap[slot];
@@ -1395,6 +1405,7 @@ void perl_register_stat_bonuses()
 	package.add("GetFrontalStunResist", &Perl_StatBonuses_GetFrontalStunResist);
 	package.add("GetGiveDoubleAttack", &Perl_StatBonuses_GetGiveDoubleAttack);
 	package.add("GetGiveDoubleRiposte", &Perl_StatBonuses_GetGiveDoubleRiposte);
+	package.add("GetGiveDoubleRiposteSkillPairCount", &Perl_StatBonuses_GetGiveDoubleRiposteSkillPairCount);
 	package.add("GetGivePetGroupTarget", &Perl_StatBonuses_GetGivePetGroupTarget);
 	package.add("GetGravityEffect", &Perl_StatBonuses_GetGravityEffect);
 	package.add("GetHaste", &Perl_StatBonuses_GetHaste);
