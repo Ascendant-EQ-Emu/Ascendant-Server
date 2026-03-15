@@ -4393,15 +4393,8 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			}
 
 			case SpellEffect::Familiar:
-			{
-				Mob *mypet = GetPet();
-				if (mypet){
-					if(mypet->IsNPC())
-						mypet->CastToNPC()->Depop();
-					SetPetID(0);
-				}
+				// Do not dismiss pet when familiar buff fades; pet stays until /pet get lost or death
 				break;
-			}
 
 			case SpellEffect::Mez:
 			{
