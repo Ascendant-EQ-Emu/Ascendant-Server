@@ -340,55 +340,44 @@ bool ClientListEntry::CheckAuth(uint32 loginserver_account_id, const char *key_p
 				uint32 found_id = database.GetAccountIDByName(m_login_account_name, &found_status);
 
 				if (found_id > 0) {
-					std::string connecting_ip = long2ip(m_ip_address);
-					if (database.CheckAccountIPMatch(found_id, connecting_ip)) {
-						// Get the existing account's LS credentials before we overwrite
-						uint32      old_lsaccount_id = 0;
-						std::string old_ls_id;
-						auto existing_account = database.GetAccountName(found_id, &old_lsaccount_id);
-						{
-							// Fetch the existing ls_id from the account row
-							auto acct_result = database.QueryDatabase(
-								fmt::format(
-									"SELECT `ls_id` FROM `account` WHERE `id` = {} LIMIT 1",
-									found_id
-								)
-							);
-							if (acct_result.RowCount() > 0) {
-								auto row = acct_result.begin();
-								old_ls_id = row[0] ? row[0] : "";
-							}
-						}
-
-						// Create link for the existing LS credentials
-						if (!old_ls_id.empty() && old_lsaccount_id > 0) {
-							database.CreateAccountLSLink(found_id, old_ls_id, old_lsaccount_id, m_login_account_name);
-						}
-
-						// Create link for the new LS credentials
-						database.CreateAccountLSLink(found_id, m_source_loginserver, LSID(), m_login_account_name);
-
-						// Update the account row to current login method
-						database.UpdateAccountLSInfo(found_id, m_source_loginserver, LSID());
-
-						m_account_id = found_id;
-						m_admin = found_status;
-						strn0cpy(m_account_name, m_login_account_name, sizeof(m_account_name));
-						LogInfo(
-							"Linked login [{}] to existing account id [{}] via IP-validated name match from loginserver [{}] - created LS links",
-							m_login_account_name,
-							m_account_id,
-							m_source_loginserver
+					// Get the existing account's LS credentials before we overwrite
+					uint32      old_lsaccount_id = 0;
+					std::string old_ls_id;
+					auto existing_account = database.GetAccountName(found_id, &old_lsaccount_id);
+					{
+						// Fetch the existing ls_id from the account row
+						auto acct_result = database.QueryDatabase(
+							fmt::format(
+								"SELECT `ls_id` FROM `account` WHERE `id` = {} LIMIT 1",
+								found_id
+							)
 						);
+						if (acct_result.RowCount() > 0) {
+							auto row = acct_result.begin();
+							old_ls_id = row[0] ? row[0] : "";
+						}
 					}
-					else {
-						LogWarning(
-							"Account link rejected for [{}] id [{}] - IP [{}] not found in account_ip history",
-							m_login_account_name,
-							found_id,
-							long2ip(m_ip_address)
-						);
+
+					// Create link for the existing LS credentials
+					if (!old_ls_id.empty() && old_lsaccount_id > 0) {
+						database.CreateAccountLSLink(found_id, old_ls_id, old_lsaccount_id, m_login_account_name);
 					}
+
+					// Create link for the new LS credentials
+					database.CreateAccountLSLink(found_id, m_source_loginserver, LSID(), m_login_account_name);
+
+					// Update the account row to current login method
+					database.UpdateAccountLSInfo(found_id, m_source_loginserver, LSID());
+
+					m_account_id = found_id;
+					m_admin = found_status;
+					strn0cpy(m_account_name, m_login_account_name, sizeof(m_account_name));
+					LogInfo(
+						"Linked login [{}] to existing account id [{}] via name match from loginserver [{}] - created LS links",
+						m_login_account_name,
+						m_account_id,
+						m_source_loginserver
+					);
 				}
 			}
 

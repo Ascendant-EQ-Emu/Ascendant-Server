@@ -35,6 +35,7 @@
 #include "world/zoneserver.h"
 
 #include <set>
+#include <unordered_map>
 
 uint32 numplayers = 0;	//this really wants to be a member variable of ClientList...
 
@@ -1415,6 +1416,43 @@ bool ClientList::IsAccountInGame(uint32 iLSID) {
 
 int ClientList::GetClientCount() {
 	return(numplayers);
+}
+
+int32 ClientList::GetClientCountForLoginServer() {
+	const int  ip_cap         = RuleI(World, MaxPlayersPerIPForLoginServer);
+	const bool exclude_bazaar = RuleB(World, ExcludeBazaarPlayersFromLoginServerCount);
+	const uint32 bazaar_zone  = 151;
+
+	// If neither rule is active, just return the raw count
+	if (ip_cap < 0 && !exclude_bazaar) {
+		return static_cast<int32>(numplayers);
+	}
+
+	std::unordered_map<uint32, int> ip_counts;
+	int32 count = 0;
+
+	LinkedListIterator<ClientListEntry *> iterator(clientlist);
+	iterator.Reset();
+	while (iterator.MoreElements()) {
+		ClientListEntry *cle = iterator.GetData();
+		if (cle->Online() >= CLE_Status::Online) {
+			if (exclude_bazaar && cle->zone() == bazaar_zone) {
+				iterator.Advance();
+				continue;
+			}
+			if (ip_cap >= 0) {
+				uint32 ip = cle->GetIP();
+				if (++ip_counts[ip] > ip_cap) {
+					iterator.Advance();
+					continue;
+				}
+			}
+			count++;
+		}
+		iterator.Advance();
+	}
+
+	return count;
 }
 
 void ClientList::GetClients(const char *zone_name, std::vector<ClientListEntry *> &res) {

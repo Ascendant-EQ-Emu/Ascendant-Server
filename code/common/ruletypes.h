@@ -356,6 +356,8 @@ RULE_STRING(World, CustomFilesUrl, "github.com/knervous/eqnexus/releases", "URL 
 RULE_INT(World, CustomFilesAdminLevel, 20, "Admin level at which custom file key is not required when CustomFilesKey is specified")
 RULE_BOOL(World, RealTimeCalculateGuilds, false, "(Temp feature flag) If true, guilds will be calculated in real time instead of at zone boot. This is a performance hit but allows for more dynamic guilds.")
 RULE_BOOL(World, EnableLoginserverAccountLinking, true, "When enabled, if a loginserver account ID is not found, attempts to link by account name with IP validation from account_ip history")
+RULE_INT(World, MaxPlayersPerIPForLoginServer, -1, "Max players counted per unique IP when reporting online count to the loginserver. -1 disables (reports all)")
+RULE_BOOL(World, ExcludeBazaarPlayersFromLoginServerCount, true, "If true, players in the Bazaar zone (ID 151) are excluded from the online count reported to the loginserver")
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Zone)

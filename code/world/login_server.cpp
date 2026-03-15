@@ -646,6 +646,7 @@ void LoginServer::SendStatus()
 	pack->pBuffer = new uchar[pack->size];
 	memset(pack->pBuffer, 0, pack->size);
 	auto loginserver_status = (LoginserverWorldStatusUpdate *) pack->pBuffer;
+	const int32 reported_players = ClientList::Instance()->GetClientCountForLoginServer();
 
 	if (WorldConfig::get()->Locked) {
 		loginserver_status->status = -2;
@@ -654,11 +655,11 @@ void LoginServer::SendStatus()
 		loginserver_status->status = -2;
 	}
 	else {
-		loginserver_status->status = numplayers;
+		loginserver_status->status = reported_players;
 	}
 
 	loginserver_status->num_zones   = numzones;
-	loginserver_status->num_players = numplayers;
+	loginserver_status->num_players = reported_players;
 	SendPacket(pack);
 	delete pack;
 }
