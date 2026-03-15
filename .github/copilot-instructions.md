@@ -159,6 +159,23 @@ Pay extra attention to PRs touching:
 - packet handling
 - database repositories
 
+## Exploit Review Bias
+
+Review suspiciously whenever a PR involves:
+
+- quantities
+- charges
+- stack merges or splits
+- item deletion or creation
+- hand-ins
+- duplicate callbacks
+- repeated event triggers
+- client-provided values
+- missing transaction boundaries
+- reward logic without idempotency checks
+
+Assume players may intentionally try edge cases.
+
 ## Final Review Heuristic
 
 Ask:
