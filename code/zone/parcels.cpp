@@ -29,6 +29,68 @@
 extern WorldServer worldserver;
 extern QueryServ  *QServ;
 
+static bool HasLoreConflictInPendingParcels(uint32 char_id, const EQ::ItemData *item)
+{
+	if (!item || !item->LoreFlag || item->LoreGroup == 0) {
+		return false;
+	}
+
+	std::string query;
+	if (item->LoreGroup == -1) {
+		query = fmt::format(
+			"SELECT 1 FROM character_parcels WHERE char_id = {} AND item_id = {} LIMIT 1",
+			char_id, item->ID
+		);
+	} else {
+		query = fmt::format(
+			"SELECT 1 FROM character_parcels cp "
+			"INNER JOIN items i ON i.id = cp.item_id "
+			"WHERE cp.char_id = {} AND i.loregroup = {} LIMIT 1",
+			char_id, item->LoreGroup
+		);
+	}
+
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		LogTrading("Failed lore parcel check for char_id [{}] item [{}]: {}",
+			char_id, item->ID, results.ErrorMessage());
+		return false;
+	}
+
+	return results.RowCount() > 0;
+}
+
+static bool RecipientHasLoreItem(uint32 char_id, const EQ::ItemData *item)
+{
+	if (!item || !item->LoreFlag || item->LoreGroup == 0) {
+		return false;
+	}
+
+	std::string query;
+	if (item->LoreGroup == -1) {
+		query = fmt::format(
+			"SELECT 1 FROM inventory WHERE charid = {} AND itemid = {} LIMIT 1",
+			char_id, item->ID
+		);
+	} else {
+		query = fmt::format(
+			"SELECT 1 FROM inventory inv "
+			"INNER JOIN items i ON i.id = inv.itemid "
+			"WHERE inv.charid = {} AND i.loregroup = {} LIMIT 1",
+			char_id, item->LoreGroup
+		);
+	}
+
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		LogTrading("Failed lore inventory check for char_id [{}] item [{}]: {}",
+			char_id, item->ID, results.ErrorMessage());
+		return false;
+	}
+
+	return results.RowCount() > 0;
+}
+
 void Client::SendBulkParcels()
 {
 	SetEngagedWithParcelMerchant(true);
@@ -416,6 +478,20 @@ void Client::DoParcelSend(const Parcel_Struct *parcel_in)
 				SendParcelAck();
 				DoParcelCancel();
 				return;
+			}
+
+			if (!RuleB(Items, DisableLore)) {
+				uint32 recipient_id = send_to_client.at(0).char_id;
+				if (RecipientHasLoreItem(recipient_id, inst->GetItem()) ||
+					HasLoreConflictInPendingParcels(recipient_id, inst->GetItem())) {
+					Message(Chat::Yellow,
+						fmt::format("{} already has a lore item: {}. Parcel not sent.",
+							send_to_client.at(0).character_name,
+							inst->GetItem()->Name).c_str());
+					SendParcelAck();
+					DoParcelCancel();
+					return;
+				}
 			}
 
 			auto result = CharacterParcelsRepository::InsertOne(database, parcel_out);

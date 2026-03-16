@@ -40,6 +40,37 @@ class QueryServ;
 extern WorldServer worldserver;
 extern QueryServ* QServ;
 
+static bool HasLoreConflictInPendingParcels(uint32 char_id, const EQ::ItemData *item)
+{
+	if (!item || !item->LoreFlag || item->LoreGroup == 0) {
+		return false;
+	}
+
+	std::string query;
+	if (item->LoreGroup == -1) {
+		query = fmt::format(
+			"SELECT 1 FROM character_parcels WHERE char_id = {} AND item_id = {} LIMIT 1",
+			char_id, item->ID
+		);
+	} else {
+		query = fmt::format(
+			"SELECT 1 FROM character_parcels cp "
+			"INNER JOIN items i ON i.id = cp.item_id "
+			"WHERE cp.char_id = {} AND i.loregroup = {} LIMIT 1",
+			char_id, item->LoreGroup
+		);
+	}
+
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		LogTrading("Failed lore parcel check for char_id [{}] item [{}]: {}",
+			char_id, item->ID, results.ErrorMessage());
+		return false;
+	}
+
+	return results.RowCount() > 0;
+}
+
 // The maximum amount of a single bazaar/barter transaction expressed in copper.
 // Equivalent to 2 Million plat
 constexpr auto MAX_TRANSACTION_VALUE = 2000000000;
@@ -2968,6 +2999,20 @@ void Client::BuyTraderItemOutsideBazaar(TraderBuy_Struct *tbs, const EQApplicati
 		tbs->quantity,
 		buy_item->GetCharges() ? fmt::format("with {} charges", buy_item->GetCharges()) : ""
 	);
+
+	if (!RuleB(Items, DisableLore)) {
+		if (CheckLoreConflict(buy_item->GetItem()) ||
+			HasLoreConflictInPendingParcels(CharacterID(), buy_item->GetItem())) {
+			Message(Chat::Red,
+				fmt::format("You already have a lore item: {}. Parcel purchase blocked.",
+					buy_item->GetItem()->Name).c_str());
+			in->method     = BazaarByParcel;
+			in->sub_action = Failed;
+			TraderRepository::UpdateActiveTransaction(database, trader_item.id, false);
+			TradeRequestFailed(app);
+			return;
+		}
+	}
 
 	uint64 total_cost = static_cast<uint64>(tbs->price) * static_cast<uint64>(tbs->quantity);
 	if (total_cost > MAX_TRANSACTION_VALUE) {

@@ -618,7 +618,7 @@ sub EVENT_DEATH {
       $npc->RemoveItem($ASCENDANT_SHARD_ID);
       quest::debug("SHARD RATE LIMIT: Removed shard for char=$char_id (cooldown active)");
     } else {
-      quest::set_data($cd_key, "1", "7m");
+      quest::set_data($cd_key, "1", 420);
       quest::debug("SHARD RATE LIMIT: Shard allowed for char=$char_id (7m cooldown set)");
     }
     last;
