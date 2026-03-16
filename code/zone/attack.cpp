@@ -35,6 +35,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "zone/water_map.h"
 #include "zone/worldserver.h"
 #include "zone/zone.h"
+#include <algorithm>
+#include <vector>
 
 extern QueryServ* QServ;
 extern WorldServer worldserver;
@@ -5696,22 +5698,51 @@ void Mob::DoRiposte(Mob *defender)
 
 	// Riposte-with-skill: rule controls stacking (multiple AAs) vs classic (single pair only).
 	if (RuleB(Combat, RiposteAASkillStacking)) {
+		// Collect all valid (chance, skill) pairs, then process them in a deterministic order.
+		std::vector<std::pair<int32, int32>> riposte_skill_pairs;
+		riposte_skill_pairs.reserve(SBIndex::MAX_RIPOSTE_SKILL_PAIRS);
+
 		for (uint16 i = 0; i < SBIndex::MAX_RIPOSTE_SKILL_PAIRS; ++i) {
 			int idx = 1 + 2 * i;
-			DoubleRipChance = defender->aabonuses.GiveDoubleRiposte[idx];
-			if (DoubleRipChance == 0)
+			int32 chance = defender->aabonuses.GiveDoubleRiposte[idx];
+			if (chance == 0)
 				continue;
-			if (!zone->random.Roll(DoubleRipChance))
-				continue;
+
 			int32 skill_id = defender->aabonuses.GiveDoubleRiposte[idx + 1];
-			LogCombat("Preforming a return SPECIAL ATTACK ([{}] percent chance, skill [{}])", DoubleRipChance, skill_id);
-			if (defender->GetClass() == Class::Monk)
-				defender->MonkSpecialAttack(this, skill_id);
-			else if (defender->IsClient())
-				defender->CastToClient()->DoClassAttacks(this, skill_id, true);
-			if (HasDied())
-				return;
-			break; // one skill proc per riposte
+			if (skill_id <= 0)
+				continue;
+
+			riposte_skill_pairs.emplace_back(chance, skill_id);
+		}
+
+		if (!riposte_skill_pairs.empty()) {
+			// Higher chance first; for equal chance, lower skill id first.
+			std::sort(
+				riposte_skill_pairs.begin(),
+				riposte_skill_pairs.end(),
+				[](const std::pair<int32, int32>& a, const std::pair<int32, int32>& b) {
+					if (a.first != b.first)
+						return a.first > b.first;
+					return a.second < b.second;
+				}
+			);
+
+			for (const auto& entry : riposte_skill_pairs) {
+				int32 chance = entry.first;
+				int32 skill_id = entry.second;
+
+				if (!zone->random.Roll(chance))
+					continue;
+
+				LogCombat("Preforming a return SPECIAL ATTACK ([{}] percent chance, skill [{}])", chance, skill_id);
+				if (defender->GetClass() == Class::Monk)
+					defender->MonkSpecialAttack(this, skill_id);
+				else if (defender->IsClient())
+					defender->CastToClient()->DoClassAttacks(this, skill_id, true);
+				if (HasDied())
+					return;
+				break; // one skill proc per riposte
+			}
 		}
 	} else {
 		DoubleRipChance = defender->aabonuses.GiveDoubleRiposte[SBIndex::DOUBLE_RIPOSTE_SKILL_ATK_CHANCE];
