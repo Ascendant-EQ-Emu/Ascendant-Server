@@ -666,7 +666,6 @@ int64 Client::CalcManaRegen(bool bCombat)
 		if (IsSitting() || CanMedOnHorse()) {
 			// kind of weird to do it here w/e
 			// client does some base medding regen for shrouds here
-			if (GetClass() != Class::Bard) {
 				auto skill = GetSkill(EQ::skills::SkillMeditate);
 				if (skill > 0) {
 					regen++;
@@ -675,7 +674,6 @@ int64 Client::CalcManaRegen(bool bCombat)
 					if (skill >= 15)
 						regen += skill / 15;
 				}
-			}
 			if (old)
 				regen = std::max(regen, static_cast<int64>(2));
 		} else if (old) {
