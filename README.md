@@ -4,16 +4,17 @@ Ascendant Server is a community-maintained server project based on [EQEmu](https
 
 ## Purpose
 
-This repository exists to preserve and evolve the Ascendant server project in an open way, regardless of the particilar operater hosting the Ascendant Server.  The Ascendant server utilizes this code and writes back however this is an open and community-owned repository.
+This repository exists to preserve and evolve the Ascendant server project in an open way, regardless of the particular operator hosting the Ascendant Server. The Ascendant server utilizes this code and writes back; however, this is an open and community-owned repository.
 
-While the goal is to make the codebase, server-side content, and project structure maintainable by a trusted and open community, live player data and sensitive operational materials for and running Ascendant server instance remains private.  Backups of the Ascendant server database may be part of this open community with privacy controls in place.  The server is viewed as being a open project.
+While the goal is to make the codebase, server-side content, and project structure maintainable by a trusted and open community, live player data and sensitive operational materials for running a live Ascendant server instance remain private. Backups of the Ascendant server database may be part of this open community with privacy controls in place. The server is viewed as an open project.
 
 ## What This Repository Contains
 
-This repository is organized around two primary directories:
+This repository is organized around three primary directories:
 
 - `/code` — the server codebase and source-level customizations
 - `/server` — server-side scripts, quests, content, configuration templates, and related project files
+- `/database` — compressed Ascendant database content intended to be imported on top of a compatible base PEQ database
 
 This repository may include:
 
@@ -22,6 +23,7 @@ This repository may include:
 - clean baseline server files
 - project tooling and sync/update scripts
 - documentation for maintainers and contributors
+- compressed database content packages for Ascendant-specific server data
 
 ## What This Repository Does Not Contain
 
@@ -46,7 +48,7 @@ That means:
 
 - the repository is the shared community codebase and baseline project snapshot
 - a live server is an operator-run deployment of that codebase
-- live player data remains private, however periodic database backups may become part of the community property w/ controls in place
+- live player data remains private, however periodic database backups may become part of the community property with controls in place
 - continuity of the project does not depend on one person continuing to host the live server
 
 ## Upstream Base
@@ -58,6 +60,35 @@ Upstream project:
 - EQEmu: https://github.com/EQEmu/EQEmu
 
 Please see the upstream project for original source history, documentation, and additional context.
+
+## Installation / Deployment
+
+A compatible Ascendant instance is intended to be built on top of a normal Akk-Stack / PEQ installation, with this repository layered over that base.
+
+In general, the process is:
+
+1. install Akk-Stack and complete a normal PEQ database setup
+2. replace the default `/code` and `/server` folders with the versions from this repository
+3. import the Ascendant database content package from `/database`
+4. complete any normal build, compile, or service startup steps required by your environment
+
+The database package included in this repository is intended to be imported **on top of** an existing compatible PEQ database. It contains Ascendant-specific content for selected tables, along with schema-only creation for required custom tables such as `login_server_account_links`.
+
+It is **not** intended to replace a full PEQ install, and it does not include local environment-specific data such as accounts, login server configuration, launcher settings, Spire data, or other runtime/server-specific records.
+
+### Database Import
+
+The compressed database package is located at:
+
+`database/ascendant_content.sql.gz`
+
+Import it into your existing PEQ database with:
+
+```bash
+gunzip -c database/ascendant_content.sql.gz | mysql -u root -p peq
+```
+
+You should perform this step only after you have already installed Akk-Stack, completed the base PEQ setup, and replaced the repository `code` and `server` folders with the Ascendant versions.
 
 ## Repository Workflow
 
