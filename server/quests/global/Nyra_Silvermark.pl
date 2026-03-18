@@ -21,7 +21,8 @@ sub EVENT_SAY {
     elsif ($text =~ /bazaar/i) {
         if ($zoneid == 344) {
             plugin::Whisper("Transporting you to the Bazaar...");
-            quest::movepc(151, -18, 55, 2.4, 497);
+            #quest::movepc(151, -18, 55, 2.4, 497);  new bazaar
+            quest::movepc(151, -9, -810, 3.75, 251);
         } else {
             plugin::Whisper("I can only transport you to the Bazaar from the Guild Lobby.");
         }

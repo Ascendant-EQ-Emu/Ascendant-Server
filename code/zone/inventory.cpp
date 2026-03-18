@@ -182,6 +182,16 @@ bool Client::CheckLoreConflict(const EQ::ItemData* item)
 	return (m_inv.HasItemByLoreGroup(item->LoreGroup, ~invWhereSharedBank) != INVALID_INDEX);
 }
 
+bool Client::QuestCheckLoreConflict(uint32 item_id)
+{
+	const EQ::ItemData* item = database.GetItem(item_id);
+	if (!item) {
+		return false;
+	}
+
+	return CheckLoreConflict(item);
+}
+
 bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2, uint32 aug3, uint32 aug4, uint32 aug5, uint32 aug6, bool attuned, uint16 to_slot, uint32 ornament_icon, uint32 ornament_idfile, uint32 ornament_hero_model) {
 	const EQ::ItemData* item = database.GetItem(item_id);
 

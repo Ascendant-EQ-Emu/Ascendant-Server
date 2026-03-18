@@ -454,6 +454,7 @@ sub EVENT_SPAWN_ZONE {
   our $spawned;
   return unless $spawned && $spawned->IsPet();
   return unless $spawned->GetOwner();
+  return unless $spawned->GetOwner()->IsClient();
   quest::settimer("pet_aura_apply_" . $spawned->GetID(), 3);
 }
 
@@ -469,6 +470,7 @@ sub EVENT_TIMER {
     quest::stoptimer($timer);
     my $pet = $entity_list->GetMobByID($pet_id);
     return unless $pet && $pet->IsPet();
+    return unless $pet->GetOwner() && $pet->GetOwner()->IsClient();
     my %auras = (
       ascendant_aura_speed_expires   => 25543,
       ascendant_aura_healing_expires => 25544,

@@ -803,8 +803,6 @@ bool IsPartialResistableSpell(uint16 spell_id)
 		) {
 			return true;
 		}
-
-		return false;
 	}
 
 	return false;

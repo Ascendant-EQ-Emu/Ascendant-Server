@@ -4076,8 +4076,8 @@ void Client::LinkDead()
 	if (GetGroup())
 	{
 		entity_list.MessageGroup(this,true,15,"%s has gone linkdead.",GetName());
-		GetGroup()->DelMember(this);
-		if (GetMerc())
+		GetGroup()->MemberZoned(this);
+		if (GetMerc() && GetMerc()->HasGroup())
 		{
 			GetMerc()->RemoveMercFromGroup(GetMerc(), GetMerc()->GetGroup());
 		}

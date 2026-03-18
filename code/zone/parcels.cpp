@@ -21,6 +21,7 @@
 #include "common/events/player_event_logs.h"
 #include "common/repositories/character_parcels_containers_repository.h"
 #include "common/repositories/character_parcels_repository.h"
+#include "common/repositories/inventory_repository.h"
 #include "common/repositories/trader_repository.h"
 #include "common/ruletypes.h"
 #include "zone/string_ids.h"
@@ -35,29 +36,16 @@ static bool HasLoreConflictInPendingParcels(uint32 char_id, const EQ::ItemData *
 		return false;
 	}
 
-	std::string query;
 	if (item->LoreGroup == -1) {
-		query = fmt::format(
-			"SELECT 1 FROM character_parcels WHERE char_id = {} AND item_id = {} LIMIT 1",
-			char_id, item->ID
-		);
-	} else {
-		query = fmt::format(
-			"SELECT 1 FROM character_parcels cp "
-			"INNER JOIN items i ON i.id = cp.item_id "
-			"WHERE cp.char_id = {} AND i.loregroup = {} LIMIT 1",
-			char_id, item->LoreGroup
-		);
+		return !CharacterParcelsRepository::GetWhere(database,
+			fmt::format("char_id = {} AND item_id = {} LIMIT 1", char_id, item->ID)
+		).empty();
 	}
 
-	auto results = database.QueryDatabase(query);
-	if (!results.Success()) {
-		LogTrading("Failed lore parcel check for char_id [{}] item [{}]: {}",
-			char_id, item->ID, results.ErrorMessage());
-		return false;
-	}
-
-	return results.RowCount() > 0;
+	return !CharacterParcelsRepository::GetWhere(database,
+		fmt::format("item_id IN (SELECT id FROM items WHERE loregroup = {}) AND char_id = {} LIMIT 1",
+			item->LoreGroup, char_id)
+	).empty();
 }
 
 static bool RecipientHasLoreItem(uint32 char_id, const EQ::ItemData *item)
@@ -66,29 +54,16 @@ static bool RecipientHasLoreItem(uint32 char_id, const EQ::ItemData *item)
 		return false;
 	}
 
-	std::string query;
 	if (item->LoreGroup == -1) {
-		query = fmt::format(
-			"SELECT 1 FROM inventory WHERE charid = {} AND itemid = {} LIMIT 1",
-			char_id, item->ID
-		);
-	} else {
-		query = fmt::format(
-			"SELECT 1 FROM inventory inv "
-			"INNER JOIN items i ON i.id = inv.itemid "
-			"WHERE inv.charid = {} AND i.loregroup = {} LIMIT 1",
-			char_id, item->LoreGroup
-		);
+		return !InventoryRepository::GetWhere(database,
+			fmt::format("character_id = {} AND item_id = {} LIMIT 1", char_id, item->ID)
+		).empty();
 	}
 
-	auto results = database.QueryDatabase(query);
-	if (!results.Success()) {
-		LogTrading("Failed lore inventory check for char_id [{}] item [{}]: {}",
-			char_id, item->ID, results.ErrorMessage());
-		return false;
-	}
-
-	return results.RowCount() > 0;
+	return !InventoryRepository::GetWhere(database,
+		fmt::format("item_id IN (SELECT id FROM items WHERE loregroup = {}) AND character_id = {} LIMIT 1",
+			item->LoreGroup, char_id)
+	).empty();
 }
 
 void Client::SendBulkParcels()

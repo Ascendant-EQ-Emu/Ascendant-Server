@@ -25,6 +25,7 @@
 #include "common/misc_functions.h"
 #include "common/repositories/buyer_buy_lines_repository.h"
 #include "common/repositories/buyer_repository.h"
+#include "common/repositories/character_parcels_repository.h"
 #include "common/repositories/trader_repository.h"
 #include "common/rulesys.h"
 #include "common/strings.h"
@@ -46,29 +47,16 @@ static bool HasLoreConflictInPendingParcels(uint32 char_id, const EQ::ItemData *
 		return false;
 	}
 
-	std::string query;
 	if (item->LoreGroup == -1) {
-		query = fmt::format(
-			"SELECT 1 FROM character_parcels WHERE char_id = {} AND item_id = {} LIMIT 1",
-			char_id, item->ID
-		);
-	} else {
-		query = fmt::format(
-			"SELECT 1 FROM character_parcels cp "
-			"INNER JOIN items i ON i.id = cp.item_id "
-			"WHERE cp.char_id = {} AND i.loregroup = {} LIMIT 1",
-			char_id, item->LoreGroup
-		);
+		return !CharacterParcelsRepository::GetWhere(database,
+			fmt::format("char_id = {} AND item_id = {} LIMIT 1", char_id, item->ID)
+		).empty();
 	}
 
-	auto results = database.QueryDatabase(query);
-	if (!results.Success()) {
-		LogTrading("Failed lore parcel check for char_id [{}] item [{}]: {}",
-			char_id, item->ID, results.ErrorMessage());
-		return false;
-	}
-
-	return results.RowCount() > 0;
+	return !CharacterParcelsRepository::GetWhere(database,
+		fmt::format("item_id IN (SELECT id FROM items WHERE loregroup = {}) AND char_id = {} LIMIT 1",
+			item->LoreGroup, char_id)
+	).empty();
 }
 
 // The maximum amount of a single bazaar/barter transaction expressed in copper.

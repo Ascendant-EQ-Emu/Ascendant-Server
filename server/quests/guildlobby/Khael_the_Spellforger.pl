@@ -135,6 +135,11 @@ sub EVENT_ITEM {
     #    return;
     #}
 
+#    Use this after next reboot:
+#    if ($client->QuestCheckLoreConflict($target_id)) {
+    # lore conflict found — includes seated augs
+#    }   
+
     if (quest::getitemstat($target_id, "loreflag") && $client->CountItem($target_id) > 0) {
         plugin::Whisper("I will not attempt this infusion. You already possess the resulting item, and the lore would reject it.");
         plugin::return_items(\%itemcount);

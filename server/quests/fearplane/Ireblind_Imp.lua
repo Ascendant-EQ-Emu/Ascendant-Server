@@ -1,8 +1,14 @@
 -- Ireblind_Imp.pl
 
 function event_spawn(e)
-	
-	eq.set_next_hp_event(76);
+	eq.set_next_hp_event(76)
+	eq.set_timer("despawn", 3600 * 1000) -- 1 hour
+end
+
+function event_timer(e)
+	if e.timer == "despawn" then
+		eq.depop()
+	end
 end
 
 function event_hp(e)

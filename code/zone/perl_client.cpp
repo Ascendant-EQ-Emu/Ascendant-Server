@@ -513,6 +513,11 @@ bool Perl_Client_CheckIncreaseSkill(Client* self, int skill_id, int chance_modif
 	return self->CheckIncreaseSkill(static_cast<EQ::skills::SkillType>(skill_id), nullptr, chance_modifier);
 }
 
+bool Perl_Client_QuestCheckLoreConflict(Client* self, uint32 item_id) // @categories Inventory and Items
+{
+	return self->QuestCheckLoreConflict(item_id);
+}
+
 void Perl_Client_SetLanguageSkill(Client* self, uint8 language_id, uint8 language_skill) // @categories Account and Character, Skills and Recipes, Stats and Attributes
 {
 	self->SetLanguageSkill(language_id, language_skill);
@@ -3438,6 +3443,7 @@ void perl_register_client()
 	package.add("CharacterID", &Perl_Client_CharacterID);
 	package.add("CheckIncreaseSkill", (bool(*)(Client*, int))&Perl_Client_CheckIncreaseSkill);
 	package.add("CheckIncreaseSkill", (bool(*)(Client*, int, int))&Perl_Client_CheckIncreaseSkill);
+	package.add("CheckLoreConflict", &Perl_Client_QuestCheckLoreConflict);
 	package.add("CheckSpecializeIncrease", &Perl_Client_CheckSpecializeIncrease);
 	package.add("ClearCompassMark", &Perl_Client_ClearCompassMark);
 	package.add("ClearAccountFlag", &Perl_Client_ClearAccountFlag);

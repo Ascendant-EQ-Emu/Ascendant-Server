@@ -566,6 +566,7 @@ bool Client::Process() {
 	}
 
 	if (client_state == DISCONNECTED) {
+		LeaveGroup();
 		OnDisconnect(true);
 		std::cout << "Client disconnected (cs=d): " << GetName() << std::endl;
 		RecordPlayerEventLog(PlayerEvent::POSSIBLE_HACK, PlayerEvent::PossibleHackEvent{.message = "/MQInstantCamp: Possible instant camp disconnect"});
@@ -573,6 +574,7 @@ bool Client::Process() {
 	}
 
 	if (client_state == CLIENT_ERROR) {
+		LeaveGroup();
 		OnDisconnect(true);
 		std::cout << "Client disconnected (cs=e): " << GetName() << std::endl;
 		return false;
@@ -583,6 +585,7 @@ bool Client::Process() {
 		LogInfo("Client linkdead: {}", name);
 
 		if (Admin() > AccountStatus::GMAdmin) {
+			LeaveGroup();
 			if (GetMerc()) {
 				GetMerc()->Save();
 				GetMerc()->Depop();
@@ -690,7 +693,9 @@ bool Client::Process() {
 /* Just a set of actions preformed all over in Client::Process */
 void Client::OnDisconnect(bool hard_disconnect) {
 	if (hard_disconnect) {
-		LeaveGroup();
+		if (GetGroup()) {
+			GetGroup()->MemberZoned(this);
+		}
 
 		if (GetMerc()) {
 			GetMerc()->Save();

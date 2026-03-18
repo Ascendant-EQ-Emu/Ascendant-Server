@@ -793,7 +793,7 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 		RuleB(World, EnableIPExemptions) ||
 		RuleI(World, MaxClientsPerIP) > 0
 	) {
-		ClientList::Instance()->GetCLEIP(GetIP(), GetAccountID()); //Check current CLE Entry IPs against incoming connection
+		ClientList::Instance()->GetCLEIP(GetIP(), GetAccountID(), GetCLE()); //Check current CLE Entry IPs against incoming connection
 	}
 
 	auto ew = (EnterWorld_Struct *) app->pBuffer;

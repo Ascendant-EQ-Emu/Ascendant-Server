@@ -500,6 +500,7 @@ RULE_REAL(Spells, BreakFeignDeathWhenCastOn, 2.0, "Percentage that Feign Death w
 RULE_REAL(Spells, BreakSneakWhenCastOn, 2.0, "Percentage that Sneak will break when you resist a spell")
 RULE_BOOL(Spells, EnableResistSoftCap, false, "Enabled resist softcap and can be adjusted by rule, SpellResistSoftCap")
 RULE_INT(Spells, SpellResistSoftCap, 255, "Softcap for spell resists.")
+RULE_INT(Spells, MaxDamageSpellPartialResist, 95, "Maximum partial resist percentage for damage spells (DD/DoT). At 95, damage spells always land with at least 5 percent effectiveness. Set to 100 to allow full resists (default behavior).")
 RULE_BOOL(Spells, AllowItemTGB, false, "Target group buff (/tgb) doesn't work with items on live, custom servers want it though")
 RULE_BOOL(Spells, NPCInnateProcOverride, true, "NPC innate procs override the target type to single target")
 RULE_BOOL(Spells, OldRainTargets, false, "Use old incorrectly implemented maximum targets for rains")
