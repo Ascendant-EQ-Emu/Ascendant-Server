@@ -18,6 +18,7 @@ logs/
 # backups / dumps
 *.sql
 *.sql.gz
+!database/ascendant_content.sql.gz
 *.bak
 *.dump
 backups/
