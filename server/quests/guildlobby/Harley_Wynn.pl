@@ -86,6 +86,13 @@ sub EVENT_ITEM {
     $rolled++;
   }
 
+  if ($rolled > 0) {
+    my $charid = $client->CharacterID();
+    my $gamble_key = "leaderboard_gambles_${charid}";
+    my $gambles = int(quest::get_data($gamble_key) || 0) + $rolled;
+    quest::set_data($gamble_key, $gambles);
+  }
+
   if ($rolled == 0) {
     quest::say("I only accept Lucky Coins, " . $client->GetCleanName() . ". Hand me one and let fate decide!");
   } elsif ($had > $MAX_PER_TRADE) {

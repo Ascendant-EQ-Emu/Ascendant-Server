@@ -572,6 +572,11 @@ sub EVENT_DISCOVER_ITEM {
 
 sub EVENT_DEATH {
     my $charid      = $client->CharacterID();
+
+    my $death_key = "leaderboard_deaths_${charid}";
+    my $deaths = int(quest::get_data($death_key) || 0) + 1;
+    quest::set_data($death_key, $deaths);
+
     my $x           = $client->GetX();
     my $y           = $client->GetY();
     my $z           = $client->GetZ() + 1;

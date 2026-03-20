@@ -843,6 +843,21 @@ void Client::CompleteConnect()
 		}
 	}
 
+	/* Update last_login on every zone-in so zone shard player counts stay accurate */
+	if (!ingame) {
+		auto e = CharacterDataRepository::FindOne(
+			database,
+			CharacterID()
+		);
+
+		e.last_login = time(nullptr);
+
+		const int updated = CharacterDataRepository::UpdateOne(database, e);
+		if (!updated) {
+			LogError("Failed to update login time for character_id [{}]", CharacterID());
+		}
+	}
+
 	if(ClientVersion() == EQ::versions::ClientVersion::RoF2 && RuleB(Parcel, EnableParcelMerchants)) {
 		SendParcelStatus();
 	}
