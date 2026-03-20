@@ -190,7 +190,9 @@ const char *LuaEvents[_LargestEventID] = {
 	"event_read_item",
 	"event_pet_command",
 	"event_charm_start",
-	"event_charm_end"
+	"event_charm_end",
+	"event_idle_on",
+	"event_idle_off"
 };
 
 extern Zone *zone;

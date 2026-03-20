@@ -17293,6 +17293,9 @@ void Client::CheckAutoIdleAFK(PlayerPositionUpdateClient_Struct *p)
 			);
 			m_is_idle = true;
 			Message(Chat::Yellow, "You are now idle. Updates will be sent to you less frequently.");
+			if (parse->PlayerHasQuestSub(EVENT_IDLE_ON)) {
+				parse->EventPlayer(EVENT_IDLE_ON, this, "", 0);
+			}
 			return;
 		}
 	}
@@ -17315,6 +17318,9 @@ void Client::CheckAutoIdleAFK(PlayerPositionUpdateClient_Struct *p)
 		LogInfo("Idle [{}] is no longer idle, syncing positions", GetCleanName());
 		m_is_idle = false;
 		Message(Chat::Yellow, "You are no longer idle.");
+		if (parse->PlayerHasQuestSub(EVENT_IDLE_OFF)) {
+			parse->EventPlayer(EVENT_IDLE_OFF, this, "", 0);
+		}
 		SyncWorldPositionsToClient();
 		ResetAFKTimer();
 	}

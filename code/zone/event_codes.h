@@ -147,6 +147,8 @@ typedef enum {
 	EVENT_PET_COMMAND,
 	EVENT_CHARM_START,
 	EVENT_CHARM_END,
+	EVENT_IDLE_ON,
+	EVENT_IDLE_OFF,
 
 	// Add new events before these or Lua crashes
 	EVENT_SPELL_EFFECT_BOT,
