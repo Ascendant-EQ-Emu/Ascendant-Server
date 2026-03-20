@@ -2226,7 +2226,8 @@ private:
 	// afk
 	bool                                  m_is_idle    = false;
 	bool                                  m_afk_reset  = false; // used to trigger next-tic afk reset
-	std::chrono::steady_clock::time_point m_last_moved = std::chrono::steady_clock::now();
+	std::chrono::steady_clock::time_point m_last_moved     = std::chrono::steady_clock::now();
+	std::chrono::steady_clock::time_point m_idle_set_time  = {};
 
 	void BulkSendInventoryItems();
 

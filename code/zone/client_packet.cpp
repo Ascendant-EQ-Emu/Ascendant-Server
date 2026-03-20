@@ -17292,9 +17292,18 @@ void Client::CheckAutoIdleAFK(PlayerPositionUpdateClient_Struct *p)
 				std::chrono::duration_cast<std::chrono::seconds>(since_last_moved).count()
 			);
 			m_is_idle = true;
+			m_idle_set_time = std::chrono::steady_clock::now();
 			Message(Chat::Yellow, "You are now idle. Updates will be sent to you less frequently.");
 			if (parse->PlayerHasQuestSub(EVENT_IDLE_ON)) {
 				parse->EventPlayer(EVENT_IDLE_ON, this, "", 0);
+			}
+
+			const int idle_shrink_size = RuleI(Character, IdleShrinkSize);
+			if (idle_shrink_size > 0) {
+				ChangeSize(static_cast<float>(idle_shrink_size), true);
+				if (GetPet()) {
+					GetPet()->ChangeSize(static_cast<float>(idle_shrink_size), true);
+				}
 			}
 			return;
 		}
@@ -17314,13 +17323,24 @@ void Client::CheckAutoIdleAFK(PlayerPositionUpdateClient_Struct *p)
 	}
 
 	// we could be not AFK and idle at the same time
-	if (has_moved && m_is_idle) {
+	auto now_idle_check = std::chrono::steady_clock::now();
+	bool idle_grace = (now_idle_check - m_idle_set_time) < std::chrono::seconds(5);
+	if (has_moved && m_is_idle && !idle_grace) {
 		LogInfo("Idle [{}] is no longer idle, syncing positions", GetCleanName());
 		m_is_idle = false;
 		Message(Chat::Yellow, "You are no longer idle.");
 		if (parse->PlayerHasQuestSub(EVENT_IDLE_OFF)) {
 			parse->EventPlayer(EVENT_IDLE_OFF, this, "", 0);
 		}
+
+		const int idle_shrink_size = RuleI(Character, IdleShrinkSize);
+		if (idle_shrink_size > 0) {
+			ChangeSize(GetDefaultRaceSize(), true);
+			if (GetPet()) {
+				GetPet()->ChangeSize(GetPet()->GetDefaultRaceSize(), true);
+			}
+		}
+
 		SyncWorldPositionsToClient();
 		ResetAFKTimer();
 	}

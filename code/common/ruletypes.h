@@ -239,6 +239,7 @@ RULE_INT(Character, SecondsBeforeIdleCombatZone, 600, "Seconds before a player i
 RULE_INT(Character, SecondsBeforeIdleNonCombatZone, 60, "Seconds before a player is considered idle in non-combat zones (60 = 1 minute)")
 RULE_INT(Character, SecondsBeforeAFKCombatZone, 1800, "Seconds before a player is considered AFK in combat zones (1800 = 30 minutes)")
 RULE_INT(Character, SecondsBeforeAFKNonCombatZone, 600, "Seconds before a player is considered AFK in non-combat zones (600 = 10 minutes)")
+RULE_INT(Character, IdleShrinkSize, 0, "Size to shrink idle players and their pets to (0 = disabled). Uses unrestricted sizing.")
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Mercs)

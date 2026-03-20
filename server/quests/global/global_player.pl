@@ -745,4 +745,8 @@ sub EVENT_POPUPRESPONSE {
     }
 }
 
+# server/quests/global/player.pl
+
+
+
 1;
