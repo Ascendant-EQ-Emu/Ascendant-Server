@@ -5616,7 +5616,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 				return 100;
 			}
 
-			int max_partial = RuleI(Spells, MaxDamageSpellPartialResist);
+			int max_partial = (caster && caster->IsOfClientBot()) ? RuleI(Spells, MaxDamageSpellPartialResist) : 100;
 			if(partial_modifier > max_partial)
 			{
 				partial_modifier = max_partial;

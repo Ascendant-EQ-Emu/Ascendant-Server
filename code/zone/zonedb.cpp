@@ -1071,7 +1071,7 @@ bool ZoneDatabase::SaveCharacterData(
 	e.level                   = pp->level;
 	e.deity                   = pp->deity;
 	e.birthday                = pp->birthday;
-	e.last_login              = pp->lastlogin;
+	e.last_login              = time(nullptr);
 	e.time_played             = pp->timePlayedMin;
 	e.pvp_status              = pp->pvp;
 	e.level2                  = pp->level2;

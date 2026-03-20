@@ -843,14 +843,17 @@ void Client::CompleteConnect()
 		}
 	}
 
-	/* Update last_login on every zone-in so zone shard player counts stay accurate */
+	/* Update last_login on every zone-in so zone shard player counts stay accurate.
+	 * Also update m_pp.lastlogin so periodic SaveCharacterData doesn't revert it. */
 	if (!ingame) {
+		m_pp.lastlogin = time(nullptr);
+
 		auto e = CharacterDataRepository::FindOne(
 			database,
 			CharacterID()
 		);
 
-		e.last_login = time(nullptr);
+		e.last_login = m_pp.lastlogin;
 
 		const int updated = CharacterDataRepository::UpdateOne(database, e);
 		if (!updated) {

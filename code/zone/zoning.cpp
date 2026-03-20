@@ -793,7 +793,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 
 		LogZoning("Zone sharding results count [{}]", results.size());
 
-		uint64_t shard_instance_duration = 3155760000;
+		uint64_t shard_instance_duration = 100000000;
 
 		for (auto &e: results) {
 			LogZoning(
