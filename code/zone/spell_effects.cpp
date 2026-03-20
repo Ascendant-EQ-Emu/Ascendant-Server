@@ -5560,7 +5560,7 @@ int64 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 				break;
 
 			case SpellEffect::LimitCastTimeMin:
-				if (spells[spell_id].cast_time < (uint16) focus_spell.base_value[i]) {
+				if (!IsBardSong(spell_id) && spells[spell_id].cast_time < (uint16) focus_spell.base_value[i]) {
 					return (0);
 				}
 				break;
