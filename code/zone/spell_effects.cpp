@@ -5586,7 +5586,7 @@ int64 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 				break;
 
 			case SpellEffect::LimitMinDur:
-				if (focus_spell.base_value[i] >
+				if (!IsBardSong(spell_id) && focus_spell.base_value[i] >
 					CalcBuffDuration_formula(GetLevel(), spell.buff_duration_formula, spell.buff_duration)) {
 					return (0);
 				}
@@ -6512,7 +6512,12 @@ int64 Mob::GetFocusEffect(focusType type, uint16 spell_id, Mob *caster, bool fro
 		type != focusReduceRecastTime &&
 		type != focusImprovedDamage &&
 		type != focusImprovedDamage2 &&
-		type != focusFcDamagePctCrit) {
+		type != focusFcDamagePctCrit &&
+		type != focusFcAmplifyMod &&
+		type != focusFcDamageAmtCrit &&
+		type != focusFcDamageAmt &&
+		type != focusFcDamageAmt2 &&
+		type != focusFcAmplifyAmt) {
 		return 0;
 	}
 
