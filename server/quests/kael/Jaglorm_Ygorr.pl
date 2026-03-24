@@ -44,7 +44,7 @@ sub EVENT_SAY {
 sub EVENT_ITEM {
   if ($faction == 1) { #requires ally Kromzek faction
     if (plugin::check_handin(\%itemcount, 25841 => 3, 24919 => 1)) { # cap
-      quest::summonitem(25398); # Item: Nature Walker's Circlet
+      plugin::velious_armor_tier_reward(25398); # Item: Nature Walker's Circlet
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -54,7 +54,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25805 => 3, 24914 => 1)) { # bp
-      quest::summonitem(25399); # Item: Nature Walker's Chestguard
+      plugin::velious_armor_tier_reward(25399); # Item: Nature Walker's Chestguard
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -64,7 +64,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25815 => 3, 24916 => 1)) { # sleeves
-      quest::summonitem(25400); # Item: Nature Walker's Vambraces
+      plugin::velious_armor_tier_reward(25400); # Item: Nature Walker's Vambraces
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -74,7 +74,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25836 => 3, 24918 => 1)) { # wrist
-      quest::summonitem(25401); # Item: Nature Walker's Bracer
+      plugin::velious_armor_tier_reward(25401); # Item: Nature Walker's Bracer
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -84,7 +84,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25840 => 3, 24920 => 1)) { # gloves
-      quest::summonitem(25402); # Item: Nature Walker's Gauntlets
+      plugin::velious_armor_tier_reward(25402); # Item: Nature Walker's Gauntlets
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -94,7 +94,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25827 => 3, 24915 => 1)) { # legs
-      quest::summonitem(25403); # Item: Nature Walker's Greaves
+      plugin::velious_armor_tier_reward(25403); # Item: Nature Walker's Greaves
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -104,7 +104,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25838 => 3, 24917 => 1)) { # boots
-      quest::summonitem(25404); # Item: Nature Walker's Boots
+      plugin::velious_armor_tier_reward(25404); # Item: Nature Walker's Boots
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek

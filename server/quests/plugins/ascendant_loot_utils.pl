@@ -293,4 +293,37 @@ sub get_loot_dbh {
     return undef;
 }
 
+#=============================================================================
+# velious_armor_tier_reward($base_id)
+# Called from Velious armor quest turn-in scripts instead of quest::summonitem.
+# Uses same chances as rare_tier_config(). Offsets are fixed:
+#   T1 (Enhanced)  = base + 300000
+#   T2 (Exalted)   = base + 500000
+#   T3 (Ascendant) = base + 700000
+#=============================================================================
+
+sub velious_armor_tier_reward {
+    my $base_id = shift;
+    my $cfg = plugin::rare_tier_config();
+    my $reward_id = $base_id;
+
+    if ($cfg->{enable}) {
+        my $roll = rand();
+        if ($roll < $cfg->{t3_chance}) {
+            $reward_id = $base_id + 700000;
+            quest::debug("Velious armor tier: Ascendant (T3) -> $reward_id");
+        }
+        elsif ($roll < $cfg->{t3_chance} + $cfg->{t2_chance}) {
+            $reward_id = $base_id + 500000;
+            quest::debug("Velious armor tier: Exalted (T2) -> $reward_id");
+        }
+        elsif ($roll < $cfg->{t3_chance} + $cfg->{t2_chance} + $cfg->{t1_chance}) {
+            $reward_id = $base_id + 300000;
+            quest::debug("Velious armor tier: Enhanced (T1) -> $reward_id");
+        }
+    }
+
+    quest::summonitem($reward_id);
+}
+
 return 1;

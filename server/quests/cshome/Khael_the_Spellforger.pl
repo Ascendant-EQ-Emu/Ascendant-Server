@@ -69,8 +69,14 @@ sub EVENT_ITEM {
 
     # ---------------------------------------------------------------------
     # INFUSION REQUIREMENTS
+    # Must be exactly 1 shard + 1 item (check quantities, not just types,
+    # to prevent cursor-item duplication exploits)
     # ---------------------------------------------------------------------
-    unless (scalar(@valid_items) == 2 && (grep { $_ == $SHARD_ID } @valid_items)) {
+    my $shard_count = $itemcount{$SHARD_ID} || 0;
+    my $total_items = 0;
+    $total_items += ($itemcount{$_} || 0) for @valid_items;
+
+    unless (scalar(@valid_items) == 2 && $shard_count == 1 && $total_items == 2) {
         plugin::Whisper("I require exactly one Ancient Shard and one item to attempt an infusion. Nothing more, nothing less.");
         plugin::return_items(\%itemcount);
         return;
@@ -125,20 +131,20 @@ sub EVENT_ITEM {
     # ---------------------------------------------------------------------
     # LORE SAFETY (ITEM-SPECIFIC)
     # Refuse BEFORE consuming shard/item if the result would lore-fail.
+    # QuestCheckLoreConflict checks worn, inventory, bank, shared bank,
+    # and seated augments — CountItem does NOT check all of these.
     # ---------------------------------------------------------------------
-    if ($client->CountItem($target_id) > 0) {
+    if ($client->CheckLoreConflict($target_id)) {
         plugin::Whisper("I will not attempt this infusion. You already possess the resulting item, and the lore would reject it.");
         plugin::return_items(\%itemcount);
         return;
     }
 
-    my %handin_hash = (
-        $SHARD_ID      => 1,
-        $other_item_id => 1
-    );
-
-    # Remove items FIRST only after we know we won't immediately lore-fail
-    unless (quest::handin(\%handin_hash)) {
+    # ---------------------------------------------------------------------
+    # Consume items via engine-tracked check_handin (uses %itemcount so
+    # the engine knows the items are consumed and won't auto-return them)
+    # ---------------------------------------------------------------------
+    unless (plugin::check_handin(\%itemcount, $SHARD_ID => 1, $other_item_id => 1)) {
         plugin::return_items(\%itemcount);
         return;
     }
@@ -146,40 +152,21 @@ sub EVENT_ITEM {
     my $roll = int(rand(100)) + 1;
 
     # ---------------------------------------------------------------------
-    # Success / Failure with verification (never eats shard/item)
+    # Success: shard + item consumed, give upgraded item
+    # Failure: shard consumed (lost), return original item only
     # ---------------------------------------------------------------------
     if ($roll <= $chance) {
         $npc->Emote("channels raw magical energy into the item... it glows with a blinding light!");
-
-        my $before = $client->CountItem($target_id);
         $client->SummonItem($target_id);
-        my $after  = $client->CountItem($target_id);
-
-        if ($after <= $before) {
-            plugin::Whisper("The magic completes... but the final binding is rejected. I return what is yours.");
-            $client->SummonItem($SHARD_ID);
-            $client->SummonItem($other_item_id);
-            return;
-        }
-
         plugin::Whisper("Success! The ascendant power has taken hold.");
     }
     else {
         $npc->Emote("channels raw magical energy... but the power destabilizes and dissipates!");
-
-        my $before_item = $client->CountItem($other_item_id);
         $client->SummonItem($other_item_id);
-        my $after_item  = $client->CountItem($other_item_id);
-
-        if ($after_item <= $before_item) {
-            plugin::Whisper("The shard shatters... and the weave refuses to return your item. I will not cheat you.");
-            $client->SummonItem($SHARD_ID);
-            $client->SummonItem($other_item_id);
-            return;
-        }
-
         plugin::Whisper("Failure. The shard has shattered, but your item remains intact.");
     }
+
+    plugin::return_items(\%itemcount);
 }
 
 sub show_details_popup {

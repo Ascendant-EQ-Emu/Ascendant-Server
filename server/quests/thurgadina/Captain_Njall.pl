@@ -8,7 +8,7 @@ sub EVENT_SAY {
       quest::say("Well met, $race! I am Captain Njall, commander of the city gaurds here in Thurgadin. If ye seek ta join our ranks, I welcome ye with open arms and have an offer to make if you are interested. If ye seek to be our enemy, I hope ye can run swifter than my archers arrows.");
     }
     if($text=~/i am interested/i){
-      quest::say("Aye, I thought ye might be. My elite warriors are in sore need of some enchanted armor. Unfortunately, I can’t spare the men to go out and fetch me the components. If you can do this for me, I’ll gladly reward you with a piece of it. I need materials for a helm, a breastplate, armplates, bracers, gauntlets, greaves, and boots.");
+      quest::say("Aye, I thought ye might be. My elite warriors are in sore need of some enchanted armor. Unfortunately, I canâ€™t spare the men to go out and fetch me the components. If you can do this for me, Iâ€™ll gladly reward you with a piece of it. I need materials for a helm, a breastplate, armplates, bracers, gauntlets, greaves, and boots.");
     }
     if($text=~/helm/i){
       quest::say("To create a piece of armor to protect your skull I will require three pieces of crushed coral as well as a corroded plate helmet."); 
@@ -40,7 +40,7 @@ sub EVENT_SAY {
 sub EVENT_ITEM { 
   if ($faction <= 3) { # Require warmly and greater faction 
     if (plugin::check_handin(\%itemcount, 25814 => 3, 24928 => 1)) { # tunic 
-      quest::summonitem(31085); # Item: Champion's Breastplate
+      plugin::velious_armor_tier_reward(31085); # Item: Champion's Breastplate
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 
@@ -50,7 +50,7 @@ sub EVENT_ITEM {
       quest::say("You have done well."); 
     } 
     elsif (plugin::check_handin(\%itemcount, 25821 => 3, 24930 => 1)) { # sleeves 
-      quest::summonitem(31086); # Item: Champion's Vambraces
+      plugin::velious_armor_tier_reward(31086); # Item: Champion's Vambraces
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 
@@ -60,7 +60,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25825 => 3, 24929 => 1)) { # leggings 
-      quest::summonitem(31089); # Item: Champion's Greaves
+      plugin::velious_armor_tier_reward(31089); # Item: Champion's Greaves
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 
@@ -70,7 +70,7 @@ sub EVENT_ITEM {
       quest::say("You have done well."); 
     } 
     elsif (plugin::check_handin(\%itemcount, 25832 => 3, 24934 => 1)) { # gauntlets 
-      quest::summonitem(31088); # Item: Champion's Gauntlets
+      plugin::velious_armor_tier_reward(31088); # Item: Champion's Gauntlets
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 
@@ -80,7 +80,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");  
     } 
     elsif (plugin::check_handin(\%itemcount, 25831 => 3, 24933 => 1)) { # cap 	
-      quest::summonitem(31084); # Item: Champion's Crown
+      plugin::velious_armor_tier_reward(31084); # Item: Champion's Crown
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 
@@ -90,7 +90,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     } 
     elsif (plugin::check_handin(\%itemcount, 25838 => 3, 24932 => 1)) { # bracers 
-      quest::summonitem(31087); # Item: Champion's Bracer
+      plugin::velious_armor_tier_reward(31087); # Item: Champion's Bracer
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 
@@ -100,7 +100,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     } 
     elsif (plugin::check_handin(\%itemcount, 25833 => 3, 24931 => 1)) { # boots 
-      quest::summonitem(31090); # Item: Champion's Boots
+      plugin::velious_armor_tier_reward(31090); # Item: Champion's Boots
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 

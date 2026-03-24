@@ -48,7 +48,7 @@ sub EVENT_SAY {
 sub EVENT_ITEM {
   if ($faction == 1) { #requires ally Kromzek faction
     if (plugin::check_handin(\%itemcount, 25841 => 3, 24912 => 1)) { # cap
-      quest::summonitem(25356); # Item: Spirit Caller's Helm
+      plugin::velious_armor_tier_reward(25356); # Item: Spirit Caller's Helm
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -58,7 +58,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25805 => 3, 24907 => 1)) { # bp
-      quest::summonitem(25357); # Item: Spirit Caller's Breastplate
+      plugin::velious_armor_tier_reward(25357); # Item: Spirit Caller's Breastplate
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -68,7 +68,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25815 => 3, 24909 => 1)) { # sleeves
-      quest::summonitem(25358); # Item: Spirit Caller's Vambraces
+      plugin::velious_armor_tier_reward(25358); # Item: Spirit Caller's Vambraces
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -78,7 +78,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25836 => 3, 24911 => 1)) { # wrist
-      quest::summonitem(25359); # Item: Spirit Caller's Bracer
+      plugin::velious_armor_tier_reward(25359); # Item: Spirit Caller's Bracer
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -88,7 +88,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25840 => 3, 24913 => 1)) { # gloves
-      quest::summonitem(25360); # Item: Spirit Caller's Gauntlets
+      plugin::velious_armor_tier_reward(25360); # Item: Spirit Caller's Gauntlets
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -98,7 +98,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25827 => 3, 24908 => 1)) { # legs
-      quest::summonitem(25361); # Item: Spirit Caller's Greaves
+      plugin::velious_armor_tier_reward(25361); # Item: Spirit Caller's Greaves
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -108,7 +108,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25838 => 3, 24910 => 1)) { # boots
-      quest::summonitem(25362); # Item: Spirit Caller's Boots
+      plugin::velious_armor_tier_reward(25362); # Item: Spirit Caller's Boots
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek

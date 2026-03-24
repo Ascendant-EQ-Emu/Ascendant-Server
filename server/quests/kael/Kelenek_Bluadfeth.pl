@@ -47,7 +47,7 @@ sub EVENT_SAY {
 sub EVENT_ITEM {
   if ($faction == 1) { #requires ally Kromzek faction
     if (plugin::check_handin(\%itemcount, 25831 => 3, 24912 => 1)) { # cap
-      quest::summonitem(25377); # Item: Deceiver's Crown
+      plugin::velious_armor_tier_reward(25377); # Item: Deceiver's Crown
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -57,7 +57,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25814 => 3, 24907 => 1)) { # bp
-      quest::summonitem(25378); # Item: Deceiver's Chestguard
+      plugin::velious_armor_tier_reward(25378); # Item: Deceiver's Chestguard
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -67,7 +67,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25821 => 3, 24909 => 1)) { # sleeves
-      quest::summonitem(25379); # Item: Deceiver's Vambraces
+      plugin::velious_armor_tier_reward(25379); # Item: Deceiver's Vambraces
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -77,7 +77,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25838 => 3, 24911 => 1)) { # wrist
-      quest::summonitem(25380); # Item: Deceiver's Bracer
+      plugin::velious_armor_tier_reward(25380); # Item: Deceiver's Bracer
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -87,7 +87,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25832 => 3, 24913 => 1)) { # gloves
-      quest::summonitem(25381); # Item: Deceiver's Gauntlets
+      plugin::velious_armor_tier_reward(25381); # Item: Deceiver's Gauntlets
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -97,7 +97,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25825 => 3, 24908 => 1)) { # legs
-      quest::summonitem(25382); # Item: Deceiver's Greaves
+      plugin::velious_armor_tier_reward(25382); # Item: Deceiver's Greaves
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -107,7 +107,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25833 => 3, 24910 => 1)) { # boots
-      quest::summonitem(25383); # Item: Deceiver's Boots
+      plugin::velious_armor_tier_reward(25383); # Item: Deceiver's Boots
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek

@@ -17,6 +17,7 @@ our (
   $npc,
   $client,
   $zoneid,
+  $instanceid,
   $text,
   $status,
   $entity_list
@@ -84,7 +85,43 @@ sub is_named_or_rare {
 }
 
 
+# -----------------------------------------------------------------------------
+# DZ Mode Detection — derives mode from expedition name, cached per instance
+# Used by EVENT_DEATH_COMPLETE to prevent respawns in raid-mode DZs
+# -----------------------------------------------------------------------------
+my %_dz_mode_cache;
+
+sub _get_dz_mode {
+    return '' unless $instanceid && $instanceid > 0;
+    return $_dz_mode_cache{$instanceid} if exists $_dz_mode_cache{$instanceid};
+
+    my $dz = quest::get_expedition();
+    return '' unless $dz;
+
+    my $name = $dz->GetName();
+    my $mode = ($name =~ /:\s*Raid$/i) ? 'raid' : 'normal';
+    $_dz_mode_cache{$instanceid} = $mode;
+    return $mode;
+}
+
 sub EVENT_SPAWN {
+
+  # -----------------------------
+  # NORMAL DZ: Depop raid targets (pure script, no DB migration needed)
+  # In normal-mode expedition instances, raid targets are excluded.
+  # Only applies in zones that offer a raid tier — otherwise let everything spawn.
+  # -----------------------------
+  if ($instanceid && $instanceid > 0 && $npc->IsRaidTarget()) {
+      my $zone_short = quest::GetZoneShortName($zoneid);
+      if (plugin::HasRaidTier($zone_short)) {
+          my $dz_mode = _get_dz_mode($instanceid);
+          if ($dz_mode eq 'normal') {
+              quest::debug("NORMAL DZ: Depop raid target " . $npc->GetCleanName());
+              $npc->Depop();
+              return;
+          }
+      }
+  }
 
   # -----------------------------
   # GLOBAL NPC COMBAT SCALING (SOLO/DUO FRIENDLY)
@@ -669,6 +706,21 @@ sub EVENT_DEATH {
   }
 }
 
-
+# -----------------------------------------------------------------------------
+# EVENT_DEATH_COMPLETE — Raid DZ no-respawn
+# Disables spawn points after NPC death in raid-mode expedition instances.
+# Only fires in instanced zones with an active expedition named "...: Raid"
+# -----------------------------------------------------------------------------
+sub EVENT_DEATH_COMPLETE {
+    return unless $instanceid && $instanceid > 0;
+    my $dz_mode = _get_dz_mode($instanceid);
+    if ($dz_mode eq 'raid') {
+        my $sp_id = $npc->GetSpawnPointID();
+        if ($sp_id) {
+            quest::disable_spawn2($sp_id);
+            quest::debug("RAID DZ: Disabled spawn2 $sp_id for " . $npc->GetCleanName());
+        }
+    }
+}
 
 1;

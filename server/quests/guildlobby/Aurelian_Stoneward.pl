@@ -136,7 +136,8 @@ sub HandleVeliousRequest {
                     . "You have defeated all five Velious raid bosses!<br><br>"
                     . "<c \"#FFD700\">Rewards:</c><br>"
                     . "• Special reward item<br>"
-                    . "• New titles<br><br>"
+                    . "• New title<br><br>"
+                    . "<c \"#FFAA00\">After claiming, hand me your Charm of the Second Age to upgrade it to the Charm of the Third Age!</c><br><br>"
                     . "<c \"#FFFFFF\">Click OK to claim your rewards!</c>";
 
         $client->Popup2("Velious Era Completion", $popup_text, 5005, 5006, 2, 0, "Claim Rewards", "Cancel");
@@ -251,7 +252,23 @@ sub HandleKunarkRequest {
 }
 
 sub EVENT_ITEM {
-    if (plugin::check_handin(\%itemcount, 2854 => 1)) {
+    if (plugin::check_handin(\%itemcount, 2855 => 1)) {
+        my $char_id = $client->CharacterID();
+        my $velious_awarded = quest::get_data("velious_awarded_" . $char_id);
+        
+        if ($velious_awarded) {
+            # They've completed Velious, upgrade their charm
+            $client->SummonItem(2827);
+            plugin::Whisper("Your charm has been upgraded! This mighty Charm of the Third Age reflects your mastery over the frozen continent.");
+            $client->Message(15, "You received: Charm of the Third Age");
+        }
+        else {
+            # They haven't completed Velious yet, return the item
+            plugin::Whisper("You have not yet completed the Velious era. I cannot upgrade your charm at this time.");
+            plugin::return_items(\%itemcount);
+        }
+    }
+    elsif (plugin::check_handin(\%itemcount, 2854 => 1)) {
         my $char_id = $client->CharacterID();
         my $classic_awarded = quest::get_data("classic_awarded_" . $char_id);
         
@@ -400,11 +417,10 @@ sub EVENT_POPUPRESPONSE {
 
         if ($has_wuoshi && $has_kelorekdar && $has_klandicar && $has_zlandicar && $has_statue) {
             # Award items and titles
-            # TODO: Add reward item ID here
-            # $client->SummonItem(ITEM_ID);
+            $client->SummonItem(17675);
 
-            # TODO: Add title IDs here
-            # quest::enabletitle(TITLE_ID);
+            # Grant titles
+            quest::enabletitle(411);
 
             # Mark as awarded (permanent)
             quest::set_data("velious_awarded_" . $char_id, $client->GetCleanName());
@@ -415,10 +431,10 @@ sub EVENT_POPUPRESPONSE {
             # Messages
             $client->Message(15, "═══════════════════════════════════════════════════");
             $client->Message(15, "Velious Era Rewards Claimed!");
-            $client->Message(15, "You received your Velious era rewards!");
+            $client->Message(15, "You received a special reward and unlocked a new title!");
             $client->Message(15, "═══════════════════════════════════════════════════");
 
-            plugin::Whisper("Congratulations, $name! Your Velious era achievements have been rewarded. The frozen continent bows to your might!");
+            plugin::Whisper("Congratulations, $name! Your Velious era achievements have been rewarded. Now hand me your Charm of the Second Age and I will upgrade it to the Charm of the Third Age!");
         }
         else {
             plugin::Whisper("I cannot grant you the rewards. You must defeat all five Velious bosses first.");

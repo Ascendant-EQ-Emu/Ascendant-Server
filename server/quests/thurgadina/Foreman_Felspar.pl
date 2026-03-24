@@ -44,7 +44,7 @@ sub EVENT_SAY {
 sub EVENT_ITEM {
   if ($faction <= 3) {
     if (plugin::check_handin(\%itemcount, 25831 => 3, 24940 => 1)) { # cap
-      quest::summonitem(31028); # Item: Brigand's Circlet
+      plugin::velious_armor_tier_reward(31028); # Item: Brigand's Circlet
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -54,7 +54,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25814 => 3, 24935 => 1)) { # bp
-      quest::summonitem(31029); # Item: Brigand's Chestguard
+      plugin::velious_armor_tier_reward(31029); # Item: Brigand's Chestguard
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -64,7 +64,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25821 => 3, 24937 => 1)) { # sleeves
-      quest::summonitem(31030); # Item: Brigand's Vambraces
+      plugin::velious_armor_tier_reward(31030); # Item: Brigand's Vambraces
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -74,7 +74,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25838 => 3, 24939 => 1)) { # wrist
-      quest::summonitem(31031); # Item: Brigand's Bracer
+      plugin::velious_armor_tier_reward(31031); # Item: Brigand's Bracer
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -84,7 +84,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25832 => 3, 24941 => 1)) { # gloves
-      quest::summonitem(31032); # Item: Brigand's Gauntlets
+      plugin::velious_armor_tier_reward(31032); # Item: Brigand's Gauntlets
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -94,7 +94,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25825 => 3, 24936 => 1)) { # legs
-      quest::summonitem(31033); # Item: Brigand's Greaves
+      plugin::velious_armor_tier_reward(31033); # Item: Brigand's Greaves
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -104,7 +104,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25833 => 3, 24938 => 1)) { # boots
-      quest::summonitem(31034); # Item: Brigand's Boots
+      plugin::velious_armor_tier_reward(31034); # Item: Brigand's Boots
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV

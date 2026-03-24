@@ -13,7 +13,8 @@ sub EVENT_DEATH_COMPLETE{
   quest::spawn2($b,6,0,-974.5,436.4,-343.8,58);
   #quest::say("spawn skele");
   }elsif($random_result<95){
-  quest::spawn2($c,6,0,-974.5,436.4,-343.8,58);
+  #quest::spawn2($c,6,0,-974.5,436.4,-343.8,58);
+  quest::spawn2($a,4,0,-1123.30,-1194.57,-98.32,244);
   #quest::say("spawn Fabled");
   }else{
     #quest::say("Spawning Bilge Farfathom");

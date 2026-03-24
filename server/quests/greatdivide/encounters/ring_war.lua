@@ -21,6 +21,7 @@
 -- items: 1741, 1746, 1745, 1744, 1743, 1742, 18511
 
 local current_wave_number;
+local war_complete = false;
 
 -- This variable controls the time between waves; currently 5min.
 local wave_cooldown_time = 5 * 60 * 1000;
@@ -160,6 +161,7 @@ function Narandi_Spawn(e)
 end
 
 function Narandi_Death(e)
+  war_complete = true;
   eq.zone_emote(MT.Red, 'No surprise the Age of the Dwarf continues with a Glorious victory of the Kromrif.');
 
   Stop_Event();
@@ -258,6 +260,58 @@ function Zrelik_Trade(e)
   item_lib.return_items(e.self, e.other, e.trade);
 end
 
+-- Sentry Badain accepts Declaration of War (1567) + Ring #9 (30369)
+-- Then paths to the dwarf camp and depops
+function Badain_Trade(e)
+  local item_lib = require("items");
+  if (item_lib.check_turn_in(e.trade, {item1 = 1567, item2 = 30369})) then
+    e.self:Say("The Dain has spoken! I will rally the troops at once. Follow me, hero!");
+    e.other:SummonItem(30369);  -- Return Ring #9 (needed for Seneschal Aldikar)
+    e.self:MoveTo(-44, -800, 51, 230, true);
+    eq.set_timer('badain_depop', 60000);
+  end
+  item_lib.return_items(e.self, e.other, e.trade);
+end
+
+function Badain_Timer(e)
+  if (e.timer == 'badain_depop') then
+    eq.stop_timer('badain_depop');
+    -- Spawn Seneschal Aldikar and Zrelik directly at the camp
+    -- (Do NOT use spawn condition 2 here; that spawns the entire war force)
+    eq.spawn2(118166, 0, 0, -111, 1, 99, 230);  -- Seneschal Aldikar
+    eq.spawn2(118167, 0, 0, -105, 1, 99, 230);  -- Zrelik the Scout
+    e.self:Depop();
+  end
+end
+
+-- Seneschal Aldikar trade handler
+-- Pre-war: Accept Ring #9 (30369) -> return Ring #9 + Orders of Engagement (18511)
+-- Post-war: Accept Ring #9 (30369) + Narandi's Head (1739) -> Shorn Head (1741) + 10th Ring (730385)
+function Seneschal_Trade(e)
+  local item_lib = require("items");
+
+  -- Post-war: Ring #9 + Narandi's Head
+  if (war_complete and item_lib.check_turn_in(e.trade, {item1 = 30369, item2 = 1739})) then
+    e.self:Say("You have done it, " .. e.other:GetName() .. "! The Kromrif invasion has been crushed. On behalf of the Dain and all the Coldain people, I present to you the Ring of Dain Frostreaver IV. May it serve as an eternal symbol of your heroism!");
+    e.other:SummonItem(1741);    -- Shorn Head of Narandi
+    e.other:SummonItem(730385);  -- Ring of Dain Frostreaver IV
+    e.other:AddEXP(5000000);
+    eq.depop_all(118169);
+    eq.depop_all(118171);
+    eq.depop_all(118172);
+    eq.depop_all(118170);
+    eq.depop_all(118168);
+
+  -- Pre-war: Ring #9 only
+  elseif (not war_complete and item_lib.check_turn_in(e.trade, {item1 = 30369})) then
+    e.self:Say("Hero of the Dain, you honor us with your presence. Take these orders to Zrelik the Scout. He will coordinate our forces. Brell be with you!");
+    e.other:SummonItem(30369);  -- Return Ring #9
+    e.other:SummonItem(18511);  -- Orders of Engagement
+  end
+
+  item_lib.return_items(e.self, e.other, e.trade);
+end
+
 function event_encounter_load(e)
   eq.register_npc_event('ring_war', Event.spawn,          118173, Master_Spawn);
   eq.register_npc_event('ring_war', Event.signal,         118173, Master_Signal);
@@ -279,6 +333,13 @@ function event_encounter_load(e)
   -- Narandi's Death
   eq.register_npc_event('ring_war', Event.death_complete, 118145, Narandi_Death);
   eq.register_npc_event('ring_war', Event.spawn,          118145, Narandi_Spawn);
+
+  -- Sentry Badain
+  eq.register_npc_event('ring_war', Event.trade,          118067, Badain_Trade);
+  eq.register_npc_event('ring_war', Event.timer,          118067, Badain_Timer);
+
+  -- Seneschal Aldikar Trade (pre-war and post-war)
+  eq.register_npc_event('ring_war', Event.trade,          118166, Seneschal_Trade);
 
   -- Loot Mobs
   eq.register_npc_event('ring_war', Event.trade,          118169, Churn_Trade);

@@ -55,25 +55,25 @@ sub EVENT_ITEM {
   else {
     if ($faction <= 3) { # Require warmly and greater faction
       if (plugin::check_handin(\%itemcount, 25837 => 3, 24954 => 1)) { # cap
-      quest::summonitem(31077); # Item: Beguiler's Crown
+      plugin::velious_armor_tier_reward(31077); # Item: Beguiler's Crown
       }
       elsif (plugin::check_handin(\%itemcount, 25807 => 3, 24949 => 1)) { # robe
-        quest::summonitem(31078); # Item: Beguiler's Robe
+        plugin::velious_armor_tier_reward(31078); # Item: Beguiler's Robe
       }
       elsif (plugin::check_handin(\%itemcount, 25818 => 3, 24951 => 1)) { # sleeves
-        quest::summonitem(31079); # Item: Beguiler's Sleeves
+        plugin::velious_armor_tier_reward(31079); # Item: Beguiler's Sleeves
       }
       elsif (plugin::check_handin(\%itemcount, 25841 => 3, 24953 => 1)) { # wrist
-        quest::summonitem(31080); # Item: Beguiler's Wristguard
+        plugin::velious_armor_tier_reward(31080); # Item: Beguiler's Wristguard
       }
       elsif (plugin::check_handin(\%itemcount, 25832 => 3, 24955 => 1)) { # gloves
-        quest::summonitem(31081); # Item: Beguiler's Gloves
+        plugin::velious_armor_tier_reward(31081); # Item: Beguiler's Gloves
       }
       elsif (plugin::check_handin(\%itemcount, 25816 => 3, 24950 => 1)) { # legs
-        quest::summonitem(31082); # Item: Beguiler's Trousers
+        plugin::velious_armor_tier_reward(31082); # Item: Beguiler's Trousers
       }
       elsif (plugin::check_handin(\%itemcount, 25829 => 3, 24952 => 1)) { # boots
-        quest::summonitem(31083); # Item: Beguiler's Slippers
+        plugin::velious_armor_tier_reward(31083); # Item: Beguiler's Slippers
       }
       else {
         plugin::return_items(\%itemcount);

@@ -41,16 +41,16 @@ sub EVENT_SAY {
     quest::say("I fear that spies lurk in every corner. You may need to help the General reach the gnomish camp if the Kromrif have gotten word of our efforts. You should call on any allies that you have to assist in case they ambush you. Brell bless you $name, good luck.");
   }
   if ($text=~/count/i && plugin::check_hasitem($client, 1465)) {
-    if ($faction <= 5 || $faction >= 8) {
+    #if ($faction <= 5 || $faction >= 8) {
       quest::say("Several of our greatest officers, including a few veterans from the war of Yesterwinter are assembling just outside our city. Gather your army at once and give this parchment and the ninth ring to Sentry Badian. I will remain inside the city with a few of my troops to defend it against any who might penetrate your defense. May Brell be with you, $name.");
 	  quest::summonitem(1567); #Declaration of War
-    }
+    #}
   }
 }
 
 sub EVENT_ITEM {
   #Handin for the 9th ring. 
-  if($faction == 1 && plugin::check_handin(\%itemcount, 1500 => 1, 30164 => 1)) {
+  if(plugin::check_handin(\%itemcount, 1500 => 1, 30164 => 1)) {
     quest::say("The people of Thurgadin are in your debt, $name. Please accept the Coldain Hero's Ring as a token of our gratitude. The curse has been removed from the blade as well. I hope you find it useful against our common foes. When you are interested in assisting me further please show me the blade. Until that day, may Brell bless and protect you.");
     #quest::say("$name, you have done a great service to my people. I had not imagined the treachery had run so deeply within our ranks. Here. Take this ring as your reward. From this day forth, you shall be known as the Hero of the Coldain. Take my Dirk as well, and if you wish to further aid us in our cause, then return it to me.");
     quest::summonitem(30369); #9th ring
@@ -62,7 +62,7 @@ sub EVENT_ITEM {
     quest::exp(4000000);
   }
   #Tormax's head
-  elsif($faction == 1 && plugin::check_handin(\%itemcount, 30516 => 1)) {
+  elsif(plugin::check_handin(\%itemcount, 30516 => 1)) {
     quest::say("You have done what no Coldain could do, $name! This is indeed a glorious say in our people's history. In return for your invaluable service I present you with the Tri-plated Golden Hackle Hammer. Its magic is powerful and I am sure it will serve you well.");
     quest::ze(2, "Let it be know from this day forth that $name and their companions are Heros of the Coldain Kingdom. King Tormax has been slain, it is a time for celebration. Let no tankard go unfilled!");
     quest::summonitem(30502); # Item: Tri-Plated Golden Hackle Hammer

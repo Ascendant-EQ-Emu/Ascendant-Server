@@ -1,7 +1,8 @@
 # Sleeper's Tomb - Instance Initialization
 # Sets spawn conditions based on expedition mode selected by Planeshifter Tyrael
-# Mode 1 = Sleeper 1.0 (Warders up, Ancients off)
-# Mode 2 = Sleeper 2.0 (Warders off, Ancients up)
+# Mode 1 = Sleeper 1.0 Raid (Warders up, Ancients off)
+# Mode 2 = Sleeper 2.0 Raid (Warders off, Ancients up)
+# Normal expedition = neither (both conditions default 0, raid targets excluded)
 
 sub EVENT_ENTERZONE {
     my $inst_id = $instanceid || 0;
@@ -48,17 +49,18 @@ sub EVENT_ENTERZONE {
     quest::debug("Sleeper Instance $inst_id: Resolved mode=$mode");
 
     if ($mode == 2) {
-        # Sleeper 2.0: Warders off, Ancients up
+        # Sleeper 2.0 Raid: Warders off, Ancients up
         quest::spawn_condition("sleeper", $inst_id, 1, 0);
         quest::spawn_condition("sleeper", $inst_id, 2, 1);
         quest::debug("Sleeper Instance $inst_id: Mode 2 (Ancients) — conditions set");
     }
-    else {
-        # Sleeper 1.0 (default): Warders up, Ancients off
+    elsif ($mode == 1) {
+        # Sleeper 1.0 Raid: Warders up, Ancients off
         quest::spawn_condition("sleeper", $inst_id, 1, 1);
         quest::spawn_condition("sleeper", $inst_id, 2, 0);
         quest::debug("Sleeper Instance $inst_id: Mode 1 (Warders) — conditions set");
     }
+    # else: Normal expedition — both conditions stay at 0 (no warders, no ancients)
 
     # Mark as initialized
     quest::set_data($init_key, "1", 604800);

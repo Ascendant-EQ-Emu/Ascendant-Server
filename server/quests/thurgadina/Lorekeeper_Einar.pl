@@ -44,7 +44,7 @@ sub EVENT_SAY {
 sub EVENT_ITEM { 
   if ($faction <= 3) { # Require greater and kindly faction
     if (plugin::check_handin(\%itemcount, 25814 => 3, 24942 => 1)) { # tunic
-      quest::summonitem(31092); # Item: Grand Master's Chest Wraps
+      plugin::velious_armor_tier_reward(31092); # Item: Grand Master's Chest Wraps
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -54,7 +54,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25821 => 3, 24944 => 1)) { # sleeves 
-      quest::summonitem(31093); # Item: Grand Master's Arm Wraps
+      plugin::velious_armor_tier_reward(31093); # Item: Grand Master's Arm Wraps
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 
@@ -64,7 +64,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");    
     } 
     elsif (plugin::check_handin(\%itemcount, 25825 => 3, 24943 => 1)) { # leggings 
-      quest::summonitem(31096); # Item: Grand Master's Leg Wraps
+      plugin::velious_armor_tier_reward(31096); # Item: Grand Master's Leg Wraps
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 
@@ -74,7 +74,7 @@ sub EVENT_ITEM {
       quest::say("You have done well."); 
     } 
     elsif (plugin::check_handin(\%itemcount, 25832 => 3, 24948 => 1)) { # gloves 
-      quest::summonitem(31095); # Item: Fist of the Grand Master
+      plugin::velious_armor_tier_reward(31095); # Item: Fist of the Grand Master
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 
@@ -84,7 +84,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     } 
     elsif (plugin::check_handin(\%itemcount, 25831 => 3, 24947 => 1)) { # cap 
-      quest::summonitem(31091); # Item: Grand Master's Headband
+      plugin::velious_armor_tier_reward(31091); # Item: Grand Master's Headband
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 
@@ -94,7 +94,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     } 
     elsif (plugin::check_handin(\%itemcount, 25838 => 3, 24946 => 1)) { # bracer 
-      quest::summonitem(31094); # Item: Grand Master's Wrist Wraps
+      plugin::velious_armor_tier_reward(31094); # Item: Grand Master's Wrist Wraps
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 
@@ -104,7 +104,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     } 
     elsif (plugin::check_handin(\%itemcount, 25833 => 3, 24945 => 1)) { # boots 
-      quest::summonitem(31097); # Item: Grand Master's Slippers
+      plugin::velious_armor_tier_reward(31097); # Item: Grand Master's Slippers
       quest::exp(100000); 
       quest::faction(406,20); # coldain 
       quest::faction(405,20); # Dain Frostreaver IV 

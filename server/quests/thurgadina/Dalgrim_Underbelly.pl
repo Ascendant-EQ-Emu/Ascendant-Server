@@ -44,7 +44,7 @@ sub EVENT_SAY {
 sub EVENT_ITEM {
   if ($faction <= 3) {
     if (plugin::check_handin(\%itemcount, 25831 => 3, 24933 => 1)) { # cap
-      quest::summonitem(31000); # Item: Dark Runed Crown
+      plugin::velious_armor_tier_reward(31000); # Item: Dark Runed Crown
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -54,7 +54,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25814 => 3, 24928 => 1)) { # bp
-      quest::summonitem(31001); # Item: Dark Runed Breastplate
+      plugin::velious_armor_tier_reward(31001); # Item: Dark Runed Breastplate
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -64,7 +64,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25821 => 3, 24930 => 1)) { # sleeves
-      quest::summonitem(31002); # Item: Dark Runed Vambraces
+      plugin::velious_armor_tier_reward(31002); # Item: Dark Runed Vambraces
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -74,7 +74,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25838 => 3, 24932 => 1)) { # wrist
-      quest::summonitem(31003); # Item: Dark Runed Bracer
+      plugin::velious_armor_tier_reward(31003); # Item: Dark Runed Bracer
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -84,7 +84,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25832 => 3, 24934 => 1)) { # gloves
-      quest::summonitem(31004); # Item: Dark Runed Gauntlets
+      plugin::velious_armor_tier_reward(31004); # Item: Dark Runed Gauntlets
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -94,7 +94,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25825 => 3, 24929 => 1)) { # legs
-      quest::summonitem(31005); # Item: Dark Runed Greaves
+      plugin::velious_armor_tier_reward(31005); # Item: Dark Runed Greaves
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV
@@ -104,7 +104,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25833 => 3, 24931 => 1)) { # boots
-      quest::summonitem(31006); # Item: Dark Runed Boots
+      plugin::velious_armor_tier_reward(31006); # Item: Dark Runed Boots
       quest::exp(100000);
       quest::faction(406,20); # coldain
       quest::faction(405,20); # Dain Frostreaver IV

@@ -44,25 +44,25 @@ sub EVENT_SAY {
 sub EVENT_ITEM {
   if ($faction == 1) { #req ally CoV 
     if (plugin::check_handin(\%itemcount, 25831 => 3, 24975 => 1)) { #cap
-      quest::summonitem(5446); # Item: Savage Helm
+      plugin::velious_armor_tier_reward(5446); # Item: Savage Helm
     }
     elsif (plugin::check_handin(\%itemcount, 25814 => 3, 24970 => 1)) { #bp
-      quest::summonitem(5447); # Item: Savage Chestguard
+      plugin::velious_armor_tier_reward(5447); # Item: Savage Chestguard
     }
     elsif (plugin::check_handin(\%itemcount, 25821 => 3, 24972 => 1)) { #arm
-      quest::summonitem(5448); # Item: Savage Armband
+      plugin::velious_armor_tier_reward(5448); # Item: Savage Armband
     }
     elsif (plugin::check_handin(\%itemcount, 25838 => 3, 24974 => 1)) { #bracer
-      quest::summonitem(5449); # Item: Savage Bracer
+      plugin::velious_armor_tier_reward(5449); # Item: Savage Bracer
     }
     elsif (plugin::check_handin(\%itemcount, 25832 => 3, 24976 => 1)) { #glove
-      quest::summonitem(5450); # Item: Savage Gloves
+      plugin::velious_armor_tier_reward(5450); # Item: Savage Gloves
     }
     elsif (plugin::check_handin(\%itemcount, 25825 => 3, 24971 => 1)) { #leg
-      quest::summonitem(5451); # Item: Savage Leggings
+      plugin::velious_armor_tier_reward(5451); # Item: Savage Leggings
     }
     elsif (plugin::check_handin(\%itemcount, 25833 => 3, 24973 => 1)) { #boots
-      quest::summonitem(5452); # Item: Savage Boots
+      plugin::velious_armor_tier_reward(5452); # Item: Savage Boots
     }
     else {
       plugin::return_items(\%itemcount);

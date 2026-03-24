@@ -44,25 +44,25 @@ sub EVENT_SAY {
 sub EVENT_ITEM {
   if ($faction == 1) { #req ally CoV 
     if (plugin::check_handin(\%itemcount, 25831 => 3, 24975 => 1)) { #cap
-      quest::summonitem(31189); # Item: White Lotus Headband
+      plugin::velious_armor_tier_reward(31189); # Item: White Lotus Headband
     }
     elsif (plugin::check_handin(\%itemcount, 25814 => 3, 24970 => 1)) { #bp
-      quest::summonitem(31190); # Item: White Lotus Chest Wraps
+      plugin::velious_armor_tier_reward(31190); # Item: White Lotus Chest Wraps
     }
     elsif (plugin::check_handin(\%itemcount, 25821 => 3, 24972 => 1)) { #arm
-      quest::summonitem(31191); # Item: White Lotus Arm Wraps
+      plugin::velious_armor_tier_reward(31191); # Item: White Lotus Arm Wraps
     }
     elsif (plugin::check_handin(\%itemcount, 25838 => 3, 24974 => 1)) { #bracer
-      quest::summonitem(31192); # Item: White Lotus Wrist Wraps
+      plugin::velious_armor_tier_reward(31192); # Item: White Lotus Wrist Wraps
     }
     elsif (plugin::check_handin(\%itemcount, 25832 => 3, 24976 => 1)) { #glove
-      quest::summonitem(31193); # Item: Fist of the White Lotus
+      plugin::velious_armor_tier_reward(31193); # Item: Fist of the White Lotus
     }
     elsif (plugin::check_handin(\%itemcount, 25825 => 3, 24971 => 1)) { #leg
-      quest::summonitem(31194); # Item: White Lotus Pants
+      plugin::velious_armor_tier_reward(31194); # Item: White Lotus Pants
     }
     elsif (plugin::check_handin(\%itemcount, 25833 => 3, 24973 => 1)) { #boots
-      quest::summonitem(31195); # Item: White Lotus Slippers
+      plugin::velious_armor_tier_reward(31195); # Item: White Lotus Slippers
     }
     else {
       plugin::return_items(\%itemcount);

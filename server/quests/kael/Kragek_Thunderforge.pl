@@ -47,7 +47,7 @@ sub EVENT_SAY {
 sub EVENT_ITEM {
   if ($faction == 1) { #requires ally Kromzek faction
     if (plugin::check_handin(\%itemcount, 25831 => 3, 24905 => 1)) { # cap
-      quest::summonitem(25433); # Item: Warlord's Crown
+      plugin::velious_armor_tier_reward(25433); # Item: Warlord's Crown
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -57,7 +57,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25814 => 3, 24900 => 1)) { # bp
-      quest::summonitem(25434); # Item: Warlord's Breastplate
+      plugin::velious_armor_tier_reward(25434); # Item: Warlord's Breastplate
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -67,7 +67,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25821 => 3, 24902 => 1)) { # sleeves
-      quest::summonitem(25435); # Item: Warlord's Vambraces
+      plugin::velious_armor_tier_reward(25435); # Item: Warlord's Vambraces
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -77,7 +77,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25838 => 3, 24904 => 1)) { # wrist
-      quest::summonitem(25436); # Item: Warlord's Bracer
+      plugin::velious_armor_tier_reward(25436); # Item: Warlord's Bracer
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -87,7 +87,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25832 => 3, 24906 => 1)) { # gloves
-      quest::summonitem(25437); # Item: Warlord's Gauntlets
+      plugin::velious_armor_tier_reward(25437); # Item: Warlord's Gauntlets
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -97,7 +97,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25825 => 3, 24901 => 1)) { # legs
-      quest::summonitem(25438); # Item: Warlord's Greaves
+      plugin::velious_armor_tier_reward(25438); # Item: Warlord's Greaves
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
@@ -107,7 +107,7 @@ sub EVENT_ITEM {
       quest::say("You have done well.");
     }
     elsif (plugin::check_handin(\%itemcount, 25833 => 3, 24903 => 1)) { # boots
-      quest::summonitem(25439); # Item: Warlord's Boots
+      plugin::velious_armor_tier_reward(25439); # Item: Warlord's Boots
       quest::exp(150000);
       quest::faction(429,20); # King Tormax
       quest::faction(448,20); # Kromzek
