@@ -25,25 +25,21 @@ sub EVENT_ENTERZONE {
         return;
     }
 
-    # Look up the pending mode from expedition members' character IDs
+    # Look up mode from the expedition leader's pending key (set by Planeshifter Tyrael)
+    # Only the leader's key is checked to avoid stale keys from other raid members
     my $mode = 0;
-
-    # First try the entering client
-    $mode = quest::get_data("sleeper_pending_" . $client->CharacterID()) || 0;
-
-    # If not found, scan all expedition members
-    if (!$mode && $exp) {
+    if ($exp) {
+        my $leader_name = $exp->GetLeaderName();
         my $members = $exp->GetMembers();
-        if ($members) {
-            foreach my $name (keys %$members) {
-                my $cid = $members->{$name};
-                $mode = quest::get_data("sleeper_pending_$cid") || 0;
-                if ($mode) {
-                    quest::debug("Sleeper Instance $inst_id: Found mode=$mode from member $name (char=$cid)");
-                    last;
-                }
-            }
+        if ($leader_name && $members && exists $members->{$leader_name}) {
+            my $leader_cid = $members->{$leader_name};
+            $mode = quest::get_data("sleeper_pending_$leader_cid") || 0;
+            quest::debug("Sleeper Instance $inst_id: Leader=$leader_name cid=$leader_cid mode=$mode");
         }
+    }
+    # Fallback: try the entering client's key
+    if (!$mode) {
+        $mode = quest::get_data("sleeper_pending_" . $client->CharacterID()) || 0;
     }
 
     quest::debug("Sleeper Instance $inst_id: Resolved mode=$mode");

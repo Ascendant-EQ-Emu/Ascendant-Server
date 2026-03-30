@@ -8,6 +8,8 @@ sub EVENT_COMBAT {
 }
 
 sub EVENT_TIMER {
-  quest::stoptimer("depop");
-  quest::depop();
+  if ($timer eq "depop") {
+    quest::stoptimer("depop");
+    quest::depop();
+  }
 }

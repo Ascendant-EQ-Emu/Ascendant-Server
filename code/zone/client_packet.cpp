@@ -1330,7 +1330,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		account_creation = a.time_creation;
 		gminvul          = a.invulnerable;
 		flymode          = static_cast<GravityBehavior>(a.flymode);
-		tellsoff         = gm_hide_me;
+		tellsoff         = gm_hide_me && RuleB(Command, HideMeCommandDisablesTells);
 	}
 
 	/* Load Character Data */

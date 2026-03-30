@@ -55,7 +55,7 @@ sub raid_boss_bonus_loot {
     return if (scalar(@item_pool) == 0);
 
     # Configuration
-    my $min_items = 2;
+    my $min_items = 1;
     my $max_items = 3;
     my $num_items = $min_items + int(rand($max_items - $min_items + 1));
 
@@ -103,8 +103,8 @@ sub raid_levelblock_loot {
 
     return if (scalar(@item_pool) == 0);
 
-    # Configuration: 2-3 items
-    my $min_items = 2;
+    # Configuration: 1-3 items
+    my $min_items = 1;
     my $max_items = 3;
     my $num_items = $min_items + int(rand($max_items - $min_items + 1));
 
@@ -127,6 +127,14 @@ sub raid_levelblock_loot {
 
         $npc->AddItem($selected_item, 1);
         quest::debug("RAID LEVELBLOCK BONUS: Added item $selected_item to $npc_name");
+    }
+
+    # Secondary ultra-rare roll (1/250 chance)
+    my $ultra_rare_pool = plugin::velious_ultra_rare_pool();
+    if ($level >= 70 && $ultra_rare_pool && scalar(@$ultra_rare_pool) > 0 && int(rand(250)) == 0) {
+        my $ultra_item = $ultra_rare_pool->[int(rand(scalar(@$ultra_rare_pool)))];
+        $npc->AddItem($ultra_item, 1);
+        quest::debug("RAID LEVELBLOCK BONUS: ULTRA-RARE! Added item $ultra_item to $npc_name (1/250 roll)");
     }
 }
 

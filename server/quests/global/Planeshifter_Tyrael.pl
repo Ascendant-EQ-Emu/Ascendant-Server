@@ -70,6 +70,7 @@ sub EVENT_SAY {
                 "  Respawning. Raid bosses excluded. 4h lockout.");
             $client->Message(18, "  " . quest::saylink("sleeper 1", 1, "[Sleeper 1.0 Raid]") .
                 "  Non-respawning. The Warders stand guard. 16h lockout.");
+            $client->Message(18, "  -----");
             $client->Message(18, "  " . quest::saylink("sleeper 2", 1, "[Sleeper 2.0 Raid]") .
                 "  Non-respawning. The Ancients have risen. 16h lockout.");
             $client->Message(18, " ");

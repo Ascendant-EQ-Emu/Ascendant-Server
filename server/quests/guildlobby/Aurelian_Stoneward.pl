@@ -263,9 +263,10 @@ sub EVENT_ITEM {
             $client->Message(15, "You received: Charm of the Third Age");
         }
         else {
-            # They haven't completed Velious yet, return the item
-            plugin::Whisper("You have not yet completed the Velious era. I cannot upgrade your charm at this time.");
-            plugin::return_items(\%itemcount);
+            # They haven't completed Velious yet — return the charm directly
+            # (check_handin already consumed it from %itemcount so return_items won't work)
+            plugin::Whisper("You have not yet claimed your Velious rewards. Please click 'Claim Rewards' first, then hand me the charm.");
+            $client->SummonItem(2855);
         }
     }
     elsif (plugin::check_handin(\%itemcount, 2854 => 1)) {
@@ -279,9 +280,9 @@ sub EVENT_ITEM {
             $client->Message(15, "You received: Charm of the Second Age");
         }
         else {
-            # They haven't completed Classic yet, return the item
-            plugin::Whisper("You have not yet completed the Classic era. I cannot upgrade your charm at this time.");
-            plugin::return_items(\%itemcount);
+            # They haven't completed Classic yet — return the charm directly
+            plugin::Whisper("You have not yet claimed your Classic rewards. Please click 'Claim Rewards' first, then hand me the charm.");
+            $client->SummonItem(2854);
         }
     }
     else {

@@ -962,7 +962,7 @@ public:
 	bool TrySpellTrigger(Mob *target, uint32 spell_id, int effect);
 	void TryTriggerOnCastRequirement();
 	void TryTwincast(Mob *caster, Mob *target, uint32 spell_id);
-	void TrySympatheticProc(Mob *target, uint32 spell_id);
+	void TrySympatheticProc(Mob *target, uint32 spell_id, EQ::spells::CastingSlot slot);
 	uint16 GetSympatheticFocusEffect(focusType type, uint16 spell_id);
 	bool TryFadeEffect(int slot);
 	void DispelMagic(Mob* casterm, uint16 spell_id, int effect_value);

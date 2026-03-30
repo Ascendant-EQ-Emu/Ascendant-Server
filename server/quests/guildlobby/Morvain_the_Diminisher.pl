@@ -74,7 +74,7 @@ sub EVENT_ITEM {
 
     # Lore safety (practical): if they already have the base item anywhere, refuse
     # This prevents creating a lore error when summoning the base.
-    if ($client->CountItem($base_id) > 0) {
+    if ($client->CheckLoreConflict($base_id)) {
         plugin::Whisper("I will not do this. You already possess the base item and this would create a lore problem.");
         plugin::return_items(\%itemcount);
         return;

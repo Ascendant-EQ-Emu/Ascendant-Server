@@ -5,11 +5,18 @@
 # Level-gated destinations for planar zones (46+).
 # Also offers expedition teleport if the player has an Expedition Port Pass.
 
+# Set to 1 to restrict Velious ports to GMs only, 0 for all players
+my $VELIOUS_ADMIN_ONLY = 0;
+
 sub EVENT_SAY {
   if ($text =~ /hail/i) {
+    my $eras = quest::saylink("classic", 1, "classic")." or ".quest::saylink("kunark", 1, "kunark");
+    if (!$VELIOUS_ADMIN_ONLY || $client->Admin() >= 100) {
+      $eras .= " or ".quest::saylink("velious", 1, "velious");
+    }
     plugin::Whisper("Greetings, $name. I am Spirekeeper Aethen, master of the arcane spires. " .
                     "I can transport you to the great wizard spires across Norrath. " .
-                    "Choose an era: ".quest::saylink("classic", 1, "classic")." or ".quest::saylink("kunark", 1, "kunark")."." );
+                    "Choose an era: $eras.");
     
     if (plugin::HasExpeditionPortPass($client) && $client->GetExpedition()) {
         my $exp = $client->GetExpedition();
@@ -32,6 +39,35 @@ sub EVENT_SAY {
   elsif ($text =~ /^kunark$/i) {
     plugin::Whisper("Kunark wizard spires: ".quest::saylink("Dreadlands Combine", 1).", " .
                     quest::saylink("Skyfire", 1).", or ".quest::saylink("Emerald Jungle", 1)."." );
+  }
+  elsif ($text =~ /^velious$/i) {
+    if ($VELIOUS_ADMIN_ONLY && $client->Admin() < 100) {
+      plugin::Whisper("The Velious spires are not yet open to travelers.");
+      return;
+    }
+    plugin::Whisper("Velious wizard spires: ".quest::saylink("Iceclad", 1).", " .
+                    quest::saylink("Great Divide", 1).", ".quest::saylink("Wakening Lands", 1).", or " .
+                    quest::saylink("Cobalt Scar", 1)."." );
+  }
+  elsif ($text =~ /^iceclad$/i) {
+    if ($VELIOUS_ADMIN_ONLY && $client->Admin() < 100) { return; }
+    plugin::Whisper("Transporting you to Iceclad wizard spire...");
+    quest::movepc(110, 4925, -630, 113);
+  }
+  elsif ($text =~ /^great divide$/i) {
+    if ($VELIOUS_ADMIN_ONLY && $client->Admin() < 100) { return; }
+    plugin::Whisper("Transporting you to Great Divide wizard spire...");
+    quest::movepc(118, 3651, -3766, -237);
+  }
+  elsif ($text =~ /^wakening lands$/i) {
+    if ($VELIOUS_ADMIN_ONLY && $client->Admin() < 100) { return; }
+    plugin::Whisper("Transporting you to Wakening Lands wizard spire...");
+    quest::movepc(119, -3032, -3040, 28);
+  }
+  elsif ($text =~ /^cobalt scar$/i) {
+    if ($VELIOUS_ADMIN_ONLY && $client->Admin() < 100) { return; }
+    plugin::Whisper("Transporting you to Cobalt Scar wizard spire...");
+    quest::movepc(117, -1634, -1065, 299);
   }
   elsif ($text =~ /^dreadlands combine$/i) {
     plugin::Whisper("Transporting you to the Combine area in Dreadlands...");

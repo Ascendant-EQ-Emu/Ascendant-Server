@@ -1770,7 +1770,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 	}
 
 	if(IsOfClientBotMerc()) {
-		TrySympatheticProc(target, spell_id);
+		TrySympatheticProc(target, spell_id, slot);
 	}
 
 	TryTwincast(this, target, spell_id);

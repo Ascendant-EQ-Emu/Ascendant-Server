@@ -129,7 +129,7 @@ my %expedition_zones = (
         has_raid_tier => 1
     },
     'sirens' => {
-        zone_version => 0,
+        zone_version => 1,
         default_name => 'Sirens Grotto',
         has_raid_tier => 1
     },
@@ -171,7 +171,8 @@ my %expedition_zones = (
     'skyshrine' => {
         zone_version => 0,
         default_name => 'Skyshrine',
-        has_raid_tier => 1
+        has_raid_tier => 1,
+        raid_entry_override => { x => 1642, y => 1003, z => -25.94, h => 127.5 }
     },
     'thurgadinb' => {
         zone_version => 0,

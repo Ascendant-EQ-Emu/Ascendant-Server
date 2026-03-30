@@ -4,11 +4,18 @@
 # Teleports players to druid ring locations across Classic and Kunark zones.
 # Also offers expedition teleport if the player has an Expedition Port Pass.
 
+# Set to 1 to restrict Velious ports to GMs only, 0 for all players
+my $VELIOUS_ADMIN_ONLY = 0;
+
 sub EVENT_SAY {
   if ($text =~ /hail/i) {
+    my $eras = quest::saylink("classic", 1, "classic")." or ".quest::saylink("kunark", 1, "kunark");
+    if (!$VELIOUS_ADMIN_ONLY || $client->Admin() >= 100) {
+      $eras .= " or ".quest::saylink("velious", 1, "velious");
+    }
     plugin::Whisper("Greetings, $name. I am Circlekeeper Aurin, guardian of the ancient druid rings. " .
                     "I can guide you to the sacred circles across Norrath. " .
-                    "Choose an era: ".quest::saylink("classic", 1, "classic")." or ".quest::saylink("kunark", 1, "kunark")."." );
+                    "Choose an era: $eras.");
                     if (plugin::HasExpeditionPortPass($client) && $client->GetExpedition()) {
                     my $exp = $client->GetExpedition();
                     my $exp_zone = quest::GetZoneLongName(quest::GetZoneShortName($exp->GetZoneID()));
@@ -28,6 +35,35 @@ sub EVENT_SAY {
   elsif ($text =~ /^kunark$/i) {
     plugin::Whisper("Kunark druid rings: ".quest::saylink("Dreadlands", 1).", " .
                     quest::saylink("Emerald Jungle", 1).", or ".quest::saylink("Skyfire", 1)."." );
+  }
+  elsif ($text =~ /^velious$/i) {
+    if ($VELIOUS_ADMIN_ONLY && $client->Admin() < 100) {
+      plugin::Whisper("The Velious circles are not yet open to travelers.");
+      return;
+    }
+    plugin::Whisper("Velious druid rings: ".quest::saylink("Iceclad", 1).", " .
+                    quest::saylink("Great Divide", 1).", ".quest::saylink("Wakening Lands", 1).", or " .
+                    quest::saylink("Cobalt Scar", 1)."." );
+  }
+  elsif ($text =~ /^iceclad$/i) {
+    if ($VELIOUS_ADMIN_ONLY && $client->Admin() < 100) { return; }
+    plugin::Whisper("Transporting you to Iceclad druid ring...");
+    quest::movepc(110, 4925, -630, 113);
+  }
+  elsif ($text =~ /^great divide$/i) {
+    if ($VELIOUS_ADMIN_ONLY && $client->Admin() < 100) { return; }
+    plugin::Whisper("Transporting you to Great Divide druid ring...");
+    quest::movepc(118, 3651, -3766, -237);
+  }
+  elsif ($text =~ /^wakening lands$/i) {
+    if ($VELIOUS_ADMIN_ONLY && $client->Admin() < 100) { return; }
+    plugin::Whisper("Transporting you to Wakening Lands druid ring...");
+    quest::movepc(119, -3032, -3040, 28);
+  }
+  elsif ($text =~ /^cobalt scar$/i) {
+    if ($VELIOUS_ADMIN_ONLY && $client->Admin() < 100) { return; }
+    plugin::Whisper("Transporting you to Cobalt Scar druid ring...");
+    quest::movepc(117, -1634, -1065, 299);
   }
   elsif ($text =~ /^dreadlands$/i) {
     plugin::Whisper("Transporting you to Dreadlands druid ring...");

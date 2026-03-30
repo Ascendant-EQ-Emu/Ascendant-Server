@@ -814,6 +814,11 @@ float Mob::GetFixedZ(const glm::vec3 &destination, int32 z_find_offset) {
 				new_z = m_Position.z;
 			}
 		}
+		else {
+			// [Ascendant] Fallback: if no valid ground Z found, keep the original Z
+			// instead of propagating BEST_Z_INVALID (-99999)
+			new_z = destination.z;
+		}
 
 		auto duration = timer.elapsed();
 

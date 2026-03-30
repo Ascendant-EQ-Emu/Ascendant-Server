@@ -14,8 +14,8 @@ local portals = {
 	[76003] = {"Toxxulia Forest"},
 	[76004] = {"The Greater Faydark"},
 	[76005] = {"The Dreadlands"},
-	--[76006] = {"The Iceclad Ocean"},
-	--[76007] = {"Cobalt Scar"},
+	[76006] = {"The Iceclad Ocean"},
+	[76007] = {"Cobalt Scar"},
 	--[76009] = {"The Twilight Sea"},
 	--[76010] = {"Stonebrunt Mountains"},
 	--[76011] = {"Wall of Slaughter"},
@@ -49,10 +49,10 @@ function event_trade(e)
 		set_portal(e,76004);
 	elseif item_lib.check_turn_in(e.trade, {item1 = 76005}) then -- Items: Portal Items
 		set_portal(e,76005);
-	--elseif item_lib.check_turn_in(e.trade, {item1 = 76006}) then -- Items: Portal Items
-	--	set_portal(e,76006);
-	--elseif item_lib.check_turn_in(e.trade, {item1 = 76007}) then -- Items: Portal Items
-	--	set_portal(e,76007);
+	elseif item_lib.check_turn_in(e.trade, {item1 = 76006}) then -- Items: Portal Items
+		set_portal(e,76006);
+	elseif item_lib.check_turn_in(e.trade, {item1 = 76007}) then -- Items: Portal Items
+		set_portal(e,76007);
 	--elseif item_lib.check_turn_in(e.trade, {item1 = 76008}) then -- Items: Portal Items
 	--	set_portal(e,76008);
 	--elseif item_lib.check_turn_in(e.trade, {item1 = 76009}) then -- Items: Portal Items

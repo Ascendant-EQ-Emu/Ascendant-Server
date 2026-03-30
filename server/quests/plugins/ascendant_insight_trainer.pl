@@ -10,7 +10,7 @@
 # ── Server progression constant ──
 # Update this when a new expansion unlocks on the server.
 # Expansion numbers: 0-9=Classic, 10-11=Kunark, 12-14=Velious, 15=Luclin, 16=PoP, 17+=GoD+
-my $CURRENT_MAX_EXPANSION = 11;  # Currently: Kunark
+my $CURRENT_MAX_EXPANSION = 14;  # Currently: Kunark
 
 # ── Economy constants ──
 # Each tome gives 1 credit of its tier; each AA rank costs 1 credit of its tier

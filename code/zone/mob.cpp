@@ -4838,8 +4838,8 @@ bool Mob::HateSummon() {
 
 	// validate hp
 	int hp_ratio = GetSpecialAbilityParam(SpecialAbility::Summon, 1);
-	hp_ratio = hp_ratio > 0 ? hp_ratio : 97;
-	if(GetHPRatio() > static_cast<float>(hp_ratio)) {
+	hp_ratio = hp_ratio > 0 ? hp_ratio : RuleI(Ascendant, HateSummonHPRatio);
+	if (hp_ratio <= 0 || GetHPRatio() > static_cast<float>(hp_ratio)) {
 		return false;
 	}
 
@@ -4873,6 +4873,13 @@ bool Mob::HateSummon() {
 
 			// probably should be like half melee range, but we can't get melee range nicely because reasons :)
 			new_pos = target->TryMoveAlong(new_pos, 5.0f, angle);
+
+			// [Ascendant] Validate Z after TryMoveAlong - fall back to summoner position if invalid
+			if (new_pos.z == BEST_Z_INVALID || new_pos.z < -2000) {
+				new_pos.x = m_Position.x;
+				new_pos.y = m_Position.y;
+				new_pos.z = m_Position.z - (summoner_zoff - summoned_zoff);
+			}
 
 			if (target->IsClient()) {
 				target->CastToClient()->MovePC(
@@ -6203,9 +6210,14 @@ bool Mob::TryFadeEffect(int slot)
 	return false;
 }
 
-void Mob::TrySympatheticProc(Mob* target, uint32 spell_id)
+void Mob::TrySympatheticProc(Mob* target, uint32 spell_id, EQ::spells::CastingSlot slot)
 {
 	if (!target || !IsValidSpell(spell_id) || !IsOfClientBotMerc()) {
+		return;
+	}
+
+	// [Ascendant] Block item clicks from triggering sympathetic procs
+	if (slot == EQ::spells::CastingSlot::Item || slot == EQ::spells::CastingSlot::PotionBelt) {
 		return;
 	}
 

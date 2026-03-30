@@ -10,10 +10,7 @@ sub EVENT_SAY {
 sub EVENT_ITEM {
   if (plugin::check_handin(\%itemcount, 30265 => 1)) {
     quest::say("Say! This looks just like the axe my uncle uses. With this I can kill the beast for sure! Now please, be very quiet, I must track my prey. I won't return to Thurgadin without the hide of the rabid tundra kodiak!");
-    $mobid = quest::spawn2(116191, 0, 0, 1547, -2459, 306.5, 0); # NPC: Boridain_Glacierbane
-    $mob = $entity_list->GetMobID($mobid);
-    $mobnpc = $mob->CastToNPC();
-    $mobnpc->SignalNPC(1);
+    quest::spawn2(116191, 0, 0, 1547, -2459, 306.5, 0); # NPC: Boridain_Glacierbane
     quest::depop_withtimer();
   }
   elsif (plugin::check_handin(\%itemcount, 30266 => 1)) {
@@ -94,9 +91,11 @@ sub EVENT_TIMER {
   }
 }
 
-sub EVENT_SIGNAL {
-  # We just got the signal to get moving
-  quest::settimer(1,3);
+sub EVENT_SPAWN {
+  # Walking copy (116191) starts its own walk timer — avoids signal race condition
+  if ($npc->GetNPCTypeID() == 116191) {
+    quest::settimer(1, 3);
+  }
 }
 
 sub EVENT_AGGRO {

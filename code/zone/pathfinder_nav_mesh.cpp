@@ -194,7 +194,7 @@ IPathfinder::IPath PathfinderNavmesh::FindPath(const glm::vec3 &start, const glm
 
 		auto status = m_impl->query->findStraightPath(&current_location[0], &epos[0], path, npoly,
 			(float*)&straight_path[0], straight_path_flags,
-			straight_path_polys, &n_straight_polys, 2048, DT_STRAIGHTPATH_AREA_CROSSINGS | DT_STRAIGHTPATH_ALL_CROSSINGS);
+			straight_path_polys, &n_straight_polys, max_polys, DT_STRAIGHTPATH_AREA_CROSSINGS | DT_STRAIGHTPATH_ALL_CROSSINGS);
 
 		if (dtStatusFailed(status)) {
 			return IPath();

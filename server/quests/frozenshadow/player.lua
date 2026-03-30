@@ -7,6 +7,7 @@ function event_click_door(e)
     local dest_z = 0;
 
     local door_id = e.door:GetDoorID();
+    local inst_id = eq.get_zone_instance_id();
 
     -- so we only need to port our other group members. Normal server door handling will handle the client clicking
     -- first we check if we're dealing with a raid group or not
@@ -81,7 +82,11 @@ function event_click_door(e)
                             -- if we're in a normal group (raid_group == nil) we don't need to verify the Group Number
                             if (raid_group == nil or player_list:GetGroupNumber(i) == raid_group) then
                                 if (pc:CalculateDistance(cur_x, cur_y, cur_z) <= 40) then
-                                    pc:MovePC(111, dest_x, dest_y, dest_z, 0); -- Zone: frozenshadow
+                                    if (inst_id > 0) then
+                                        pc:MovePCInstance(111, inst_id, dest_x, dest_y, dest_z, 0);
+                                    else
+                                        pc:MovePC(111, dest_x, dest_y, dest_z, 0);
+                                    end
                                 end
                             end
                         end

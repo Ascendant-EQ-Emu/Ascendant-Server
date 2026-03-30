@@ -14,11 +14,15 @@ sub EVENT_PROXIMITY_SAY {
 }
 
 sub EVENT_SIGNAL {
-  if ($dwarf == 1) {
+  my $count = $npc->GetEntityVariable('plate_signals') || 0;
+  $count++;
+  quest::debug("[KaelPlate] Throne received signal, count=$count");
+  if ($count >= 2) {
+    quest::debug("[KaelPlate] Spawning loot Doldigun (#Doldigun_Steinwielder 113508)");
     quest::spawn2(113508,31,0,1126,-840,-118.3,126.8); # NPC: #Doldigun_Steinwielder
-    $dwarf = 0
+    $npc->SetEntityVariable('plate_signals', '0');
   }
-  elsif ($dwarf != 1) {
-    $dwarf = 1;
+  else {
+    $npc->SetEntityVariable('plate_signals', "$count");
   }
 }

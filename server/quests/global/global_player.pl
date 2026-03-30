@@ -335,7 +335,6 @@ sub EVENT_SPELL_FADE {
 
 
 sub EVENT_SAY {
-    
 
     if ($text =~ /^#myaacredits$/i) {
         plugin::ShowAllAACredits($client);
@@ -745,8 +744,36 @@ sub EVENT_POPUPRESPONSE {
     }
 }
 
-# server/quests/global/player.pl
-
-
+sub EVENT_GM_COMMAND {
+    our ($message);
+    # Audit log: capture all built-in # commands from GMs (any status > 0)
+    if ($status > 0 && $status < 200) {
+        my $char = $client->GetCleanName();
+        my $acct = $client->AccountID();
+        my $zone = quest::GetZoneShortName($zoneid);
+        my $full_cmd = $message || '';
+        my $target_name = '';
+        my $target = $client->GetTarget();
+        if ($target) {
+            $target_name = $target->GetCleanName();
+        }
+        eval {
+            my $dbh = plugin::LoadMysql();
+            if ($dbh) {
+                my $sth = $dbh->prepare("INSERT INTO gm_audit_log (account_id, account_status, char_name, zone, command, target) VALUES (?, ?, ?, ?, ?, ?)");
+                $sth->execute($acct, $status, $char, $zone, $full_cmd, $target_name);
+                $sth->finish();
+                $dbh->disconnect();
+            }
+        };
+        my @t = localtime;
+        my $ts = sprintf("%04d-%02d-%02d %02d:%02d:%02d", $t[5]+1900, $t[4]+1, $t[3], $t[2], $t[1], $t[0]);
+        if (open(my $fh, '>>', '/home/eqemu/server/logs/gm_audit.log')) {
+            my $tgt = $target_name ? " -> ${target_name}" : '';
+            print $fh "[$ts] [${char} acct:${acct} status:${status}] [${zone}] ${full_cmd}${tgt}\n";
+            close($fh);
+        }
+    }
+}
 
 1;

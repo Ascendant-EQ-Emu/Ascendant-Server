@@ -124,8 +124,8 @@ sub EVENT_ITEM {
         return;
     }
 
-    my $target_name = quest::getitemname($target_id);
-    unless ($target_name) {
+    my $target_exists = quest::getitemstat($target_id, 'id');
+    unless ($target_exists && $target_exists == $target_id) {
         plugin::Whisper("This item refuses the shard's power. It does not seem to have an ascendant form.");
         plugin::return_items(\%itemcount);
         return;
@@ -159,9 +159,18 @@ sub EVENT_ITEM {
     # Failure: shard consumed (lost), return original item only
     # ---------------------------------------------------------------------
     if ($roll <= $chance) {
-        $npc->Emote("channels raw magical energy into the item... it glows with a blinding light!");
-        $client->SummonItem($target_id);
-        plugin::Whisper("Success! The ascendant power has taken hold.");
+        my $verify = quest::getitemstat($target_id, 'id');
+        if ($verify && $verify == $target_id) {
+            $npc->Emote("channels raw magical energy into the item... it glows with a blinding light!");
+            $client->SummonItem($target_id);
+            plugin::Whisper("Success! The ascendant power has taken hold.");
+        } else {
+            quest::debug("[Khael] SAFETY: target_id=$target_id failed verify, returning items to " . $client->GetCleanName());
+            $npc->Emote("channels raw magical energy... but something goes terribly wrong!");
+            $client->SummonItem($other_item_id);
+            $client->SummonItem($SHARD_ID);
+            plugin::Whisper("The infusion was unstable. Your items have been returned.");
+        }
     }
     else {
         $npc->Emote("channels raw magical energy... but the power destabilizes and dissipates!");

@@ -1225,6 +1225,17 @@ RULE_INT(Ascendant, HybridCasterSpellDmgBonus, 25,
 // --- DoT cast time cap ---
 RULE_INT(Ascendant, DoTCastTimeCapMS, 2500,
 	"[Ascendant] Cap DoT spell cast times for Nec/Dru/Sha/Bard to this value in ms. Uses IsDamageOverTimeSpell() check. 0 = disabled.")
+// --- Hate summon HP threshold ---
+RULE_INT(Ascendant, HateSummonHPRatio, 90,
+	"[Ascendant] Default HP ratio threshold for NPC hate summon. Mob must be at or below this HP% to summon. Per-NPC special_abilities param overrides this. 0 = disable hate summon.")
+// --- Silence duration cap ---
+RULE_INT(Ascendant, MaxSilenceDurationForPlayerCharacter, 2,
+	"[Ascendant] Maximum number of tics a player can be silenced. 1 tic equals 6 seconds. 0 = no cap (vanilla behavior).")
+// --- Dispel protections ---
+RULE_BOOL(Ascendant, DispelProtectSelfBuffs, true,
+	"[Ascendant] If true, NPC dispels will skip buffs where the caster is the target itself (protects self-buffs and AA-granted buffs).")
+RULE_INT(Ascendant, DispelMaxSlotAttempts, 3,
+	"[Ascendant] Maximum number of buff slots an NPC dispel will attempt before giving up. Player dispels are unaffected. 0 = unlimited (vanilla behavior).")
 RULE_CATEGORY_END()
 
 #undef RULE_CATEGORY

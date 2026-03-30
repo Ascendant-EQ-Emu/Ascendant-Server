@@ -178,9 +178,12 @@ sub CreateExpedition {
     $dz->SetSafeReturn($zone_name, $safe_x, $safe_y, $safe_z, $safe_h);
 
     # Zone-in location override (if configured in expedition config)
-    if ($config->{entry_override}) {
-        my $e = $config->{entry_override};
-        $dz->SetZoneInLocation($e->{x}, $e->{y}, $e->{z}, $e->{h});
+    # raid_entry_override applies only to raid mode; entry_override applies to all modes
+    my $entry = ($mode eq 'raid' && $config->{raid_entry_override})
+                ? $config->{raid_entry_override}
+                : $config->{entry_override};
+    if ($entry) {
+        $dz->SetZoneInLocation($entry->{x}, $entry->{y}, $entry->{z}, $entry->{h});
     }
 
     my $member_count = $dz->GetMemberCount();

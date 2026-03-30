@@ -4582,7 +4582,14 @@ void Mob::CommonDamage(Mob* attacker, int64 &damage, const uint16 spell_id, cons
 				else {
 					if (damage > 0) {
 						if (IsValidSpell(spell_id)) {
-							filter = iBuffTic ? FilterDOT : FilterSpellDamage;
+							filter = iBuffTic ? FilterDOT : FilterPetSpells;
+
+							// [Ascendant] Send pet spell damage text to owner
+							if (!iBuffTic && !FromDamageShield && owner->CastToClient()->GetFilter(FilterPetSpells) != FilterHide) {
+								char val1[20] = { 0 };
+								owner->MessageString(Chat::NonMelee, HIT_NON_MELEE,
+									attacker->GetCleanName(), GetCleanName(), ConvertArray(damage, val1));
+							}
 						} else {
 							filter = FilterPetHits;
 						}

@@ -1,6 +1,10 @@
 -- This is for the second of the two greater spirits in North Freeport.
 -- items: 1666
 
+function event_spawn(e)
+	eq.set_timer("despawn", 300);
+end
+
 function event_say(e)
 	if(e.message:findi("hail")) then -- Part of Shaman Epic 1.0
 		e.self:Say("Greetings, shaman. Tell me, do you follow [Justice], [War], [Honor], [Fear], or [Hate]?");
@@ -29,6 +33,12 @@ function event_say(e)
 		e.self:Say("That is good. You will need to walk three paths before you can reach that of the Heyokah. The paths of patience, wisdom, and might. First, you must learn patience. Take this gem and go on a pilgrimage to an island in the great water the wasichu call Erud's Crossing. The Kerrans there are our allies and can show you to our next contact, Ooglyn. Give Ooglyn the gem and do what she asks. As you walk the path, remember what you've learned about trust.");
 		eq.signal(8118,0); -- NPC: a_greater_spirit_
 		e.other:AddEXP(1000);
+		eq.depop();
+	end
+end
+
+function event_timer(e)
+	if(e.timer == "despawn") then
 		eq.depop();
 	end
 end
