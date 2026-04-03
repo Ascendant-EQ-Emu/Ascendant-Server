@@ -26,6 +26,15 @@ my @lobby_locs = (
 sub EVENT_ENTERZONE { #message only appears in Cities / Pok and wherever the Wayfarer Camps (LDON) is in.  This message won't appear in the player's home city.
   # Auto-reapply Ascendant Auras on zone
   ApplyAscendantAuras();
+
+  # April Fools size pranks
+  plugin::AprilFools_OnZoneIn($client);
+
+  # Fellowship bonus: recheck buff on zone-in (buffs don't persist across zones)
+  plugin::Fellowship_ApplyBuff($client);
+  if ($client->IsGrouped()) {
+      quest::settimer("fellowship_recheck", 30);
+  }
   
   # Start alt currency pending check timer
   quest::settimer("altcur_pending_check", 10);
@@ -215,6 +224,17 @@ sub EVENT_TIMER {
     }
     
 
+	if ($timer eq "fellowship_recheck") {
+        # Periodic recheck: handles members zoning out, disconnecting, etc.
+        if ($client->IsGrouped()) {
+            plugin::Fellowship_ApplyBuff($client);
+        } else {
+            plugin::Fellowship_FadeAll($client);
+            quest::stoptimer("fellowship_recheck");
+        }
+        return;
+    }
+
 	if ($timer eq "moa_online_roll") {
         # MOA online timer - check for award
         plugin::MoA_HandleOnlineTimerFire($client, $zoneid);
@@ -264,7 +284,13 @@ sub EVENT_TIMER {
     elsif (plugin::HandleAntiWarpTimer($client, $timer)) {
         return;
     }
+    # April Fools size revert
+    if ($timer =~ /^af_sizerevert_/) {
+        plugin::AprilFools_SizeRevert($timer);
+        return;
+    }
 }
+
 
 use strict;
 use warnings;
@@ -741,6 +767,18 @@ sub EVENT_POPUPRESPONSE {
         } else {
             quest::movepc($zone_id, $x, $y, $z, $heading);
         }
+    }
+}
+
+sub EVENT_GROUP_CHANGE {
+    our ($grouped);
+    # Fellowship bonus: evaluate group composition and apply/fade buff
+    if ($grouped) {
+        plugin::Fellowship_ApplyBuff($client);
+        quest::settimer("fellowship_recheck", 30);
+    } else {
+        plugin::Fellowship_FadeAll($client);
+        quest::stoptimer("fellowship_recheck");
     }
 }
 

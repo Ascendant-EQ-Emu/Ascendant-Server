@@ -1,24 +1,19 @@
 # items: 1046, 30162
 my $corbin = undef;
+my $ambush_spawned = 0;
 
 sub EVENT_SPAWN {
     if ($npc->GetNPCTypeID() == 116119) {
         $corbin = $npc;
         quest::settimer("down",1);
     }
+    elsif ($npc->GetNPCTypeID() == 2000944) {
+        quest::say("[DEBUG] Escort spawned on grid " . $npc->GetGrid() . " at (" . int($x) . ", " . int($y) . ", " . int($z) . ")");
+    }
 }
 
 sub EVENT_HP {
-    if ($inchpevent == 50) {
-        quest::emote(" sits up with a groan of effort.");
-        $npc->SetAppearance(1);
-        quest::setnextinchpevent(75);
-    }
-    elsif ($inchpevent == 75) {
-        quest::emote(" heaves himself heavily to his feet.");
-        $npc->SetAppearance(0);
-        quest::settimer("down", 5);
-    }
+    # Unused — healing detection handled by "checkheal" timer below
 }
 
 sub EVENT_SAY { 
@@ -42,7 +37,9 @@ sub EVENT_ITEM {
 }
 
 sub EVENT_WAYPOINT_DEPART {
-    if ($wp == 39) {
+    quest::say("[DEBUG] Departing waypoint $wp") if ($npc->GetNPCTypeID() == 2000944);
+    if ($wp == 39 && !$ambush_spawned) {
+        $ambush_spawned = 1;
         quest::say("Uh oh, looks like they were tipped off somehow... I hope you can handle them.");
         quest::spawn2(116569, 0, 0, -2139, 168, 150, 114); # NPC: Commander_Bahreck
         quest::settimer("depop", 1200);
@@ -76,9 +73,22 @@ sub EVENT_TIMER {
         quest::stoptimer("resethp");
 
         $npc->SetHP( $npc->GetMaxHP() * 0.30 );
-        quest::setnextinchpevent(50);
-
         $npc->SetAppearance(3);
+
+        quest::settimer("checkheal", 2);
+    }
+    elsif ($timer eq "checkheal") {
+        my $hp_pct = int($npc->GetHPRatio());
+        if ($hp_pct >= 75 && $npc->GetAppearance() != 0) {
+            quest::stoptimer("checkheal");
+            quest::emote(" heaves himself heavily to his feet.");
+            $npc->SetAppearance(0);
+            quest::settimer("down", 5);
+        }
+        elsif ($hp_pct >= 50 && $npc->GetAppearance() == 3) {
+            quest::emote(" sits up with a groan of effort.");
+            $npc->SetAppearance(1);
+        }
     }
 }
 

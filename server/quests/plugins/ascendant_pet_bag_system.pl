@@ -13,22 +13,24 @@ my $PET_BAG_ITEM_ID        = 93861;  # Original pet bag (6-slot)
 my $CASTER_PET_BAG_ITEM_ID = 2828;   # Ascendant Casters Pet Bag (10-slot, Enc/Mag/Wiz/Nec)
 
 sub EquipPetFromBag {
-    my $npc = shift;  # The pet NPC
+    my ($npc, $owner_arg) = @_;
     
     # Make sure this is actually a pet
     return unless $npc->IsPet();
-    
-    # Get the pet's owner
-    my $owner_id = $npc->GetOwnerID();
-    return unless $owner_id;
-    
-    my $entity_list = plugin::val('$entity_list');
-    return unless $entity_list;
 
     my $PET_BAG_HEAL_COOLDOWN_SEC = 600;  # 10 minutes
 
-    
-    my $owner = $entity_list->GetClientByID($owner_id);
+    # Use passed-in owner if available, otherwise discover via entity_list
+    my $owner;
+    if ($owner_arg && $owner_arg->IsClient()) {
+        $owner = $owner_arg;
+    } else {
+        my $owner_id = $npc->GetOwnerID();
+        return unless $owner_id;
+        my $entity_list = plugin::val('$entity_list');
+        return unless $entity_list;
+        $owner = $entity_list->GetClientByID($owner_id);
+    }
     unless ($owner) {
         quest::debug("PetBag: Could not find owner for pet");
         return;
@@ -143,25 +145,15 @@ sub EquipPetFromBag {
             quest::debug("PetBag: Item $item_name spelldmg=$item_spelldmg healamt=$item_healamt (running total: sd=$spelldmg_bonus ha=$healamt_bonus)");
         }
 
-        # Accumulate stats from augments on this item
-        my $item_abs_slot;
-        if ($bag_inv_slot >= 2000) {
-            my $bankbags_begin = quest::getinventoryslotid("bankbags.begin");
-            $item_abs_slot = $bankbags_begin + ($bag_inv_slot - 2000) * 10 + $bag_slot;
-        } else {
-            my $generalbags_begin = quest::getinventoryslotid("generalbags.begin");
-            $item_abs_slot = $generalbags_begin + ($bag_inv_slot - 23) * 10 + $bag_slot;
-        }
-        my @aug_sockets = (
-            quest::getinventoryslotid("augsocket.begin")..quest::getinventoryslotid("augsocket.end")
-        );
-        for my $aug_socket (@aug_sockets) {
-            my $aug_id = $owner->GetAugmentIDAt($item_abs_slot, $aug_socket);
+        # Accumulate stats from augments on this item (direct ItemInst method)
+        for my $aug_slot (0..5) {
+            my $aug_id = $item->GetAugmentItemID($aug_slot);
             next unless $aug_id && $aug_id > 0;
-            my $aug_ac = ($npc->GetItemStat($aug_id, "ac")       || 0);
+            quest::debug("PetBag: Found aug $aug_id in slot $aug_slot on $item_name");
+            my $aug_ac  = ($npc->GetItemStat($aug_id, "ac")       || 0);
             my $aug_atk = ($npc->GetItemStat($aug_id, "atk")      || 0);
-            my $aug_sd = ($npc->GetItemStat($aug_id, "spelldmg") || 0);
-            my $aug_ha = ($npc->GetItemStat($aug_id, "healamt")  || 0);
+            my $aug_sd  = ($npc->GetItemStat($aug_id, "spelldmg") || 0);
+            my $aug_ha  = ($npc->GetItemStat($aug_id, "healamt")  || 0);
             $ac_bonus       += $aug_ac;
             $atk_bonus      += $aug_atk;
             $spelldmg_bonus += $aug_sd;
@@ -326,10 +318,10 @@ sub FindPetBag {
     my $client = shift;
 
     # Determine which bag IDs to search for, in priority order
-    # Enc(11)/Mag(13)/Wiz(14)/Nec(10) get the caster bag first, then fallback to original
+    # Nec(11)/Wiz(12)/Mag(13)/Enc(14)/BST(15) get the caster bag first, then fallback to original
     my $class_id = $client->GetClass();
     my @bag_ids;
-    if ($class_id == 10 || $class_id == 11 || $class_id == 13 || $class_id == 14) {
+    if ($class_id == 11 || $class_id == 12 || $class_id == 13 || $class_id == 14 || $class_id == 15) {
         @bag_ids = ($CASTER_PET_BAG_ITEM_ID, $PET_BAG_ITEM_ID);
     } else {
         @bag_ids = ($PET_BAG_ITEM_ID);
@@ -337,10 +329,19 @@ sub FindPetBag {
 
     quest::debug("PetBag: Searching for pet bag (IDs: " . join(',', @bag_ids) . ") class=$class_id");
 
+    # Diagnostic: dump all general inventory slot contents
+    for my $slot (22..32) {
+        my $item = $client->GetItemAt($slot);
+        if ($item) {
+            quest::debug("PetBag: DIAG slot $slot has item ID=" . $item->GetID() . " name=" . $item->GetName());
+        }
+    }
+
     # Search each bag ID in priority order — first match wins
+    # Use hardcoded slot ranges (consistent with buff bag system)
     foreach my $target_id (@bag_ids) {
-        # Search general inventory slots (23-32 = general1-general10)
-        for my $slot (23..32) {
+        # Search general inventory slots (22-32)
+        for my $slot (22..32) {
             my $item = $client->GetItemAt($slot);
             next unless $item;
             if ($item->GetID() == $target_id) {

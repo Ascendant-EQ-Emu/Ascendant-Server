@@ -162,7 +162,7 @@ IPathfinder::IPath PathfinderNavmesh::FindPath(const glm::vec3 &start, const glm
 	static const int max_polys = 256;
 	dtPolyRef start_ref;
 	dtPolyRef end_ref;
-	glm::vec3 ext(10.0f, 200.0f, 10.0f);
+	glm::vec3 ext(10.0f, 100.0f, 10.0f);
 
 	m_impl->query->findNearestPoly(&current_location[0], &ext[0], &filter, &start_ref, 0);
 	m_impl->query->findNearestPoly(&dest_location[0], &ext[0], &filter, &end_ref, 0);
@@ -246,6 +246,9 @@ IPathfinder::IPath PathfinderNavmesh::FindPath(const glm::vec3 &start, const glm
 						auto &p1 = straight_path[i];
 						auto &p2 = straight_path[i + 1];
 						auto dist = glm::distance(p1, p2);
+						if (dist == 0.0f) {
+							continue;
+						}
 						auto dir = glm::normalize(p2 - p1);
 						float total = 0.0f;
 						glm::vec3 previous_pt = p1;

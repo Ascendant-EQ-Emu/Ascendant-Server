@@ -380,8 +380,8 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, CastingSlot slot,
 		// if there's a cast time, check if they have a modifier for it
 		if (cast_time) {
 			cast_time = GetActSpellCasttime(spell_id, cast_time);
-			// [Ascendant] Cap cast time after all reductions
-			if (RuleI(Ascendant, CapSpellCastTimeMS) > 0 && cast_time > RuleI(Ascendant, CapSpellCastTimeMS))
+			// [Ascendant] Cap cast time after all reductions (PCs/Bots only)
+			if (IsOfClientBot() && RuleI(Ascendant, CapSpellCastTimeMS) > 0 && cast_time > RuleI(Ascendant, CapSpellCastTimeMS))
 				cast_time = RuleI(Ascendant, CapSpellCastTimeMS);
 			// [Ascendant] DoT cast time cap for Nec/Dru/Sha/Bard
 			if (RuleI(Ascendant, DoTCastTimeCapMS) > 0

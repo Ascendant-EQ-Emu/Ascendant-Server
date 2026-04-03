@@ -22,33 +22,52 @@
 
 local current_wave_number;
 local war_complete = false;
+local event_failed = false;
 
 -- This variable controls the time between waves; currently 5min.
-local wave_cooldown_time = 5 * 60 * 1000;
+local wave_cooldown_time = 1.5 * 60 * 1000;
+
+local function inst()
+  return eq.get_zone_instance_id();
+end
 
 function Stop_Event()
+  eq.stop_timer('wave_cooldown');
+
+  -- Depop all war mobs
+  eq.depop_all(118160); -- Kromrif_Recruit
+  eq.depop_all(118130); -- Kromrif_Captain
+  eq.depop_all(118150); -- Kromrif_Warrior
+  eq.depop_all(118209); -- Kromrif_Priest
+  eq.depop_all(118120); -- Kromrif_General
+  eq.depop_all(118156); -- Kromrif_Veteran
+  eq.depop_all(118210); -- Kromrif_High_Priest
+  eq.depop_all(118158); -- Kromrif_Warlord
+  eq.depop_all(118145); -- Narandi
+
   -- Condition 1 is the general mobs in the zone
-  eq.spawn_condition("greatdivide", 0, 1, 1);
-  eq.spawn_condition("greatdivide", 0, 2, 0);
-  eq.spawn_condition("greatdivide", 0, 3, 0);
-  eq.spawn_condition("greatdivide", 0, 4, 0);
-  eq.spawn_condition("greatdivide", 0, 5, 0);
-  eq.spawn_condition("greatdivide", 0, 6, 0);
-  eq.spawn_condition("greatdivide", 0, 7, 0);
-  eq.spawn_condition("greatdivide", 0, 8, 0);
-  eq.spawn_condition("greatdivide", 0, 9, 0);
-  eq.spawn_condition("greatdivide", 0, 10, 0);
-  eq.spawn_condition("greatdivide", 0, 11, 0);
-  eq.spawn_condition("greatdivide", 0, 12, 0);
-  eq.spawn_condition("greatdivide", 0, 13, 0);
-  eq.spawn_condition("greatdivide", 0, 14, 0);
-  eq.spawn_condition("greatdivide", 0, 15, 0);
-  eq.spawn_condition("greatdivide", 0, 16, 0);
-  eq.spawn_condition("greatdivide", 0, 17, 0);
-  eq.spawn_condition("greatdivide", 0, 18, 0);
-  eq.spawn_condition("greatdivide", 0, 19, 0);
-  eq.spawn_condition("greatdivide", 0, 20, 0);
-  eq.spawn_condition("greatdivide", 0, 21, 0);
+  local i = inst();
+  eq.spawn_condition("greatdivide", i, 1, 1);
+  eq.spawn_condition("greatdivide", i, 2, 0);
+  eq.spawn_condition("greatdivide", i, 3, 0);
+  eq.spawn_condition("greatdivide", i, 4, 0);
+  eq.spawn_condition("greatdivide", i, 5, 0);
+  eq.spawn_condition("greatdivide", i, 6, 0);
+  eq.spawn_condition("greatdivide", i, 7, 0);
+  eq.spawn_condition("greatdivide", i, 8, 0);
+  eq.spawn_condition("greatdivide", i, 9, 0);
+  eq.spawn_condition("greatdivide", i, 10, 0);
+  eq.spawn_condition("greatdivide", i, 11, 0);
+  eq.spawn_condition("greatdivide", i, 12, 0);
+  eq.spawn_condition("greatdivide", i, 13, 0);
+  eq.spawn_condition("greatdivide", i, 14, 0);
+  eq.spawn_condition("greatdivide", i, 15, 0);
+  eq.spawn_condition("greatdivide", i, 16, 0);
+  eq.spawn_condition("greatdivide", i, 17, 0);
+  eq.spawn_condition("greatdivide", i, 18, 0);
+  eq.spawn_condition("greatdivide", i, 19, 0);
+  eq.spawn_condition("greatdivide", i, 20, 0);
+  eq.spawn_condition("greatdivide", i, 21, 0);
 end
 
 function Master_Spawn(e)
@@ -62,8 +81,9 @@ function Master_Spawn(e)
 end
 
 function Start_Event()
-  eq.spawn_condition("greatdivide", 0, 1, 0);
-  eq.spawn_condition("greatdivide", 0, 2, 1);
+  local i = inst();
+  eq.spawn_condition("greatdivide", i, 1, 0);
+  eq.spawn_condition("greatdivide", i, 2, 1);
 
   -- Signal the ringtemmaster to spawn the first wave...
   eq.signal(118173, 1); -- NPC: ringtenmaster
@@ -79,8 +99,10 @@ function Start_Event()
 end
 
 function Zrelik_Say(e)
-  if (e.other:Admin() >= 80 and e.other:GetGM()) then
+  if (e.other:Admin() >= 80) then
     if (e.message:findi('end')) then
+      e.self:Say("By the Dain's order, the war is called off! Stand down!");
+      event_failed = true;
       Stop_Event();
 
       eq.depop_all(118169);
@@ -88,8 +110,9 @@ function Zrelik_Say(e)
       eq.depop_all(118172);
       eq.depop_all(118170);
       eq.depop_all(118168);
-
     elseif (e.message:findi('start')) then
+      e.self:Say("Sound the horns! The war begins!");
+      event_failed = false;
       Start_Event();
 
     end
@@ -99,9 +122,10 @@ end
 function Master_Signal(e)
 
   if (e.signal == 1) then
-    eq.spawn_condition("greatdivide", 0, 3, 1);
+    eq.spawn_condition("greatdivide", inst(), 3, 1);
 
   elseif (e.signal == 2) then 
+    if (event_failed) then return; end
     -- Stop wave timer (if its running)
     eq.stop_timer('wave_cooldown');
     eq.set_timer('wave_cooldown', wave_cooldown_time);
@@ -114,9 +138,11 @@ function Master_Timer(e)
   if (e.timer == 'wave_cooldown') then
     eq.stop_timer(e.timer);
 
+    if (event_failed) then return; end
+
     current_spawn_condition = current_spawn_condition + 1;
 
-    eq.spawn_condition("greatdivide", 0, current_spawn_condition, 1);
+    eq.spawn_condition("greatdivide", inst(), current_spawn_condition, 1);
   end
 end
 
@@ -137,8 +163,7 @@ end
 
 function Seneschal_Death(e)
   -- Event Fail
-  -- Pop Giants outside of Thurgadin
-  -- Depop all the mobs in Thurgadin for 2hours.
+  event_failed = true;
   Stop_Event();
   eq.zone_emote(MT.Red, "The forces defending the Grand Citadel of Thurgadin have failed, the Kromrif have overrun the first and oldest race.  The age of the dwarf has come to an end...");
 

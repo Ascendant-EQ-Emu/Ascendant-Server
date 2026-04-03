@@ -1037,11 +1037,13 @@ void Mob::AI_Process() {
 				bool  within_distance   = DistanceNoZ(GetPosition(), t->GetPosition()) < 75;
 				bool  within_z_distance = std::abs(self_z - target_z) >= 25;
 				if (within_distance && within_z_distance && !can_path_to) {
-					float new_z = FindDestGroundZ(t->GetPosition());
-					// [Ascendant] Guard: skip GMMove if no valid ground Z found
-					if (new_z != BEST_Z_INVALID) {
-						GMMove(t->GetPosition().x, t->GetPosition().y, new_z + GetZOffset(), t->GetPosition().w, false);
-						FaceTarget(t);
+					if (zone->HasMap() && zone->zonemap->CheckLoS(GetPosition(), t->GetPosition())) {
+						float new_z = FindDestGroundZ(t->GetPosition());
+						// [Ascendant] Guard: skip GMMove if no valid ground Z found
+						if (new_z != BEST_Z_INVALID) {
+							GMMove(t->GetPosition().x, t->GetPosition().y, new_z + GetZOffset(), t->GetPosition().w, false);
+							FaceTarget(t);
+						}
 					}
 				}
 			}

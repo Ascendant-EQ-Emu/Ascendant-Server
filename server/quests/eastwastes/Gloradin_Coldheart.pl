@@ -13,8 +13,6 @@ sub EVENT_ITEM {
 sub EVENT_TIMER {
   if($timer eq "spawn1") {
     quest::stoptimer("spawn1");
-#Garadain Glacierbane
-    quest::spawn2(116084,236,0,-389.6,-2713.6,181,38); # NPC: Garadain_Glacierbane
 #royal wolven guard
     quest::spawn2(116563,238,0,790.9,-2497.6,168.6,80); # NPC: Royal_Wolven_Guard
     quest::spawn2(116563,239,0,799.8,-2491.6,169.1,80); # NPC: Royal_Wolven_Guard
@@ -80,6 +78,12 @@ sub EVENT_TIMER {
     quest::spawn2(116012,0,0,416.2,-3592.8,146.3,510); # NPC: Firbrand_the_Black
 #ringeightcoord
     quest::spawn2(116575,0,0,0,0,0,0); # NPC: ringeightcoord
+    quest::settimer("spawn_garadain", 45);
+  }
+  elsif($timer eq "spawn_garadain") {
+    quest::stoptimer("spawn_garadain");
+#Garadain Glacierbane - delayed so army forms up first
+    quest::spawn2(116084,236,0,-389.6,-2713.6,181,38); # NPC: Garadain_Glacierbane
     quest::depop_withtimer();
   }
 }#END of FILE Zone:eastwastes  ID:116138 -- Gloradin_Coldheart 

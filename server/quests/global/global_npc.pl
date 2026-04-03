@@ -112,13 +112,18 @@ sub EVENT_SPAWN {
   # Only applies in zones that offer a raid tier — otherwise let everything spawn.
   # -----------------------------
   if ($instanceid && $instanceid > 0 && $npc->IsRaidTarget()) {
-      my $zone_short = quest::GetZoneShortName($zoneid);
-      if (plugin::HasRaidTier($zone_short)) {
-          my $dz_mode = _get_dz_mode($instanceid);
-          if ($dz_mode eq 'normal') {
-              quest::debug("NORMAL DZ: Depop raid target " . $npc->GetCleanName());
-              $npc->Depop();
-              return;
+      my $npc_id = $npc->GetNPCTypeID();
+      # Exception: Narandi the Wretched (118145) must stay in normal instances for Ring War
+      my %raid_depop_exceptions = (118145 => 1);
+      if (!$raid_depop_exceptions{$npc_id}) {
+          my $zone_short = quest::GetZoneShortName($zoneid);
+          if (plugin::HasRaidTier($zone_short)) {
+              my $dz_mode = _get_dz_mode($instanceid);
+              if ($dz_mode eq 'normal') {
+                  quest::debug("NORMAL DZ: Depop raid target " . $npc->GetCleanName());
+                  $npc->Depop();
+                  return;
+              }
           }
       }
   }
@@ -198,7 +203,7 @@ sub EVENT_SPAWN {
     
       if ($owner && $owner->IsClient()) {
           # Equip pet from owner's pet bag
-          plugin::EquipPetFromBag($npc);
+          plugin::EquipPetFromBag($npc, $owner);
       }
   }
 
@@ -236,6 +241,14 @@ sub EVENT_SPAWN {
         $npc->ChangeGender(2);
       }
     }
+  }
+
+  # -----------------------------
+  # April Fools Global Drops (1 in 10 kills)
+  # -----------------------------
+  if (plugin::AprilFools_Enabled()) {
+      my @AprilFoolsItems = (29781, 42983, 55938, 64044, 64046);
+      plugin::AddLoot(1, 10, @AprilFoolsItems);
   }
 
   # -----------------------------
@@ -462,10 +475,12 @@ sub EVENT_SAY {
                     return;
                 }
                 
-                my $equipped_count = plugin::EquipPetFromBag($npc);
-                if ($equipped_count && $equipped_count > 0) {
+                my $equipped_count = plugin::EquipPetFromBag($npc, $owner);
+                if (defined $equipped_count && $equipped_count > 0) {
                     quest::set_data($cooldown_key, time());
                     $client->Message(18, $npc->GetCleanName() . " 'I have equipped " . $equipped_count . " item(s) from your Pet Bag, Master!'");
+                } elsif (!defined $equipped_count) {
+                    $client->Message(13, $npc->GetCleanName() . " 'I could not find a Pet Bag in your inventory or bank, Master.'");
                 } else {
                     $client->Message(18, $npc->GetCleanName() . " 'I found no items to equip in your Pet Bag, Master.'");
                 }
@@ -481,6 +496,7 @@ sub EVENT_COMBAT {
     my $combat_state = plugin::val('$combat_state');
     if ($combat_state == 1) {
         plugin::EncounterScaling_OnEngage($npc);
+        plugin::AprilFools_OnEngage($npc);
     } else {
         plugin::EncounterScaling_OnDisengage($npc);
     }
@@ -598,6 +614,8 @@ sub EVENT_CHARM_END {
 
 sub EVENT_DEATH {
  
+  plugin::AprilFools_OnDeath($npc);
+
   quest::debug("ANTI-FARM: EVENT_DEATH fired");
  
   my $killer_id = plugin::val('$killer_id');

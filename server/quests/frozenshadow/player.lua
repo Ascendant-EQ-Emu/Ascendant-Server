@@ -61,8 +61,8 @@ function event_click_door(e)
                 dest_y = 725;
                 dest_z = 12;
             end
-        elseif (door_id == 1) then -- Sixth Floor Door
-            if (e.self:KeyRingCheck(20038) or e.self:HasItem(20038)) then
+        elseif (door_id == 1) then -- Mirror to Tserrina (7th Floor)
+            if (e.self:KeyRingCheck(20039) or e.self:HasItem(20039)) then
                 dest_x = 20;
                 dest_y = 250;
                 dest_z = 355;

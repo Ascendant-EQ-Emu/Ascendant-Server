@@ -176,6 +176,31 @@ sub EVENT_ITEM {
         $npc->Emote("channels raw magical energy... but the power destabilizes and dissipates!");
         $client->SummonItem($other_item_id);
         plugin::Whisper("Failure. The shard has shattered, but your item remains intact.");
+
+        # Track upgrade failures for leaderboard
+        my $charid = $client->CharacterID();
+        my $fail_key = "leaderboard_upgrade_fails_${charid}";
+        my $fails = int(quest::get_data($fail_key) || 0) + 1;
+        quest::set_data($fail_key, $fails);
+
+        my $name = $client->GetCleanName();
+
+        # Milestone: 100 fails — "Officially Unlucky"
+        if ($fails == 100) {
+            quest::enabletitle(414);
+            quest::we(15, "$name has failed 100 item upgrades at Khael the Spellforger. They are officially unlucky!");
+        }
+        # Milestone: 200 fails
+        elsif ($fails == 200) {
+            quest::enabletitle(415);
+            quest::we(15, "$name has failed 200 item upgrades at Khael the Spellforger. Their bad luck is becoming legendary!");
+        }
+        # Milestone: 350 fails — "Legendary Failure"
+        elsif ($fails == 350) {
+            quest::enabletitle(412);
+            quest::enabletitle(413);
+            quest::we(15, "$name has failed 350 item upgrades at Khael the Spellforger. They have experienced a truly legendary amount of failure!");
+        }
     }
 
     plugin::return_items(\%itemcount);
