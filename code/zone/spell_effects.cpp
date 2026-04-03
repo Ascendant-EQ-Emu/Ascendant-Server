@@ -447,9 +447,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 
 			case SpellEffect::CurrentMana:
 			{
-				// Bards don't get mana from effects, good or bad.
-				if(GetClass() == Class::Bard)
-					break;
 				if(IsManaTapSpell(spell_id)) {
 					if (!IsPureMeleeClass()) {
 #ifdef SPELL_EFFECT_SPAM
@@ -484,9 +481,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 
 			case SpellEffect::CurrentManaOnce:
 			{
-				// Bards don't get mana from effects, good or bad.
-				if(GetClass() == Class::Bard)
-					break;
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Current Mana Once: %+i", effect_value);
 #endif
