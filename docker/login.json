@@ -1,0 +1,20 @@
+{
+  "database": {
+    "host": "mariadb",
+    "port": "3306",
+    "user": "eqemu",
+    "password": "eqemu",
+    "db": "peq"
+  },
+  "client_configuration": {
+    "titanium_opcodes": "assets/opcodes/login_opcodes.conf",
+    "sod_opcodes": "assets/opcodes/login_opcodes_sod.conf"
+  },
+  "general": {
+    "unregistered_allowed": true
+  },
+  "web_api": {
+    "enabled": false,
+    "port": 6000
+  }
+}

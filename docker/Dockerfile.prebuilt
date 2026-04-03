@@ -1,0 +1,35 @@
+# Runtime-only image using pre-built binaries from server/bin/
+# Use this if you already have compiled binaries
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libmariadb3 \
+    libssl3 \
+    libsodium23 \
+    libperl5.36 \
+    liblua5.1-0 \
+    libcurl4 \
+    libyaml-cpp0.7 \
+    mariadb-client \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -s /bin/bash eqemu
+
+WORKDIR /home/eqemu/server
+
+# Create needed directories
+RUN mkdir -p logs shared bin
+
+# Copy server runtime data
+COPY server/assets/ /home/eqemu/server/assets/
+COPY server/quests/ /home/eqemu/server/quests/
+COPY server/plugins/ /home/eqemu/server/plugins/
+COPY server/lua_modules/ /home/eqemu/server/lua_modules/
+COPY server/maps/ /home/eqemu/server/maps/
+COPY server/shared/ /home/eqemu/server/shared/
+COPY server/export/ /home/eqemu/server/export/
+
+RUN chown -R eqemu:eqemu /home/eqemu
+
+USER eqemu
