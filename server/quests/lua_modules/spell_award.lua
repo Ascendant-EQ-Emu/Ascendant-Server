@@ -14,7 +14,12 @@ local SA_INFO = 1000
 -- ---- Rare item pool (manually curated) -------------------------
 -- Add item IDs here to include them in the 15% rare offer.
 local RARE_ITEMS = {
-    [5401] = { name = "Mithril Two-Handed Sword", desc = "2H Sword" },
+    [5401]  = { name = "Mithril Two-Handed Sword",        desc = "2H Sword"  },
+    [13401] = { name = "Manastone",                       desc = "Legendary" },
+    [711621]= { name = "Cloak of Flames (Ascendant)",     desc = "Back"      },
+    [705667]= { name = "Earthshaker (Ascendant)",         desc = "2H Blunt"  },
+    [711551]= { name = "Shield of the Immaculate (Ascendant)", desc = "Shield" },
+    [711601]= { name = "Runed Bolster Belt (Ascendant)",  desc = "Waist"     },
 }
 
 -- ---- Module-level init (runs once at zone startup) -------------
@@ -55,11 +60,11 @@ end
 -- ---- Eligible list from pre-built index ------------------------
 
 local function is_excluded(data)
-    local ds = data.desc or ""
-    -- Exclude illusion spells and spells whose type is "Summon" (item/corpse summons)
-    -- "Summon$" matches "Summon", "Self Summon", "Group Summon" but NOT "Summon DD"
-    if ds:find("Illusion") then return true end
-    if ds:find("Summon$")  then return true end
+    -- effectid1=32 = SPA_SUMMON_ITEM: covers item summons (Summon Food, Summon Arrow,
+    -- Enchant Silver, etc.) while leaving pet summons (33), undead pets (71),
+    -- and summon corpse (91) untouched.
+    if (data.effectid1 or 0) == 32 then return true end
+    if (data.desc or ""):find("Illusion") then return true end
     return false
 end
 
@@ -240,23 +245,23 @@ local function send_choice_chat(client, choices, rare_item_id)
     for i, spell_id in ipairs(choices) do
         local e = _pool and _pool[spell_id]
         if e then
-            local link = eq.say_link(tostring(i), false,
-                string.format("  [%d: %s]  ", i, e.name))
-            local icon = (e.scroll_id and e.scroll_id > 0)
-                and (eq.item_link(e.scroll_id) .. "  ") or ""
-            client:Message(MT.White, icon .. link)
+            local pick_link = eq.say_link(tostring(i), false,
+                string.format("[%d: %s]", i, e.name))
+            local desc_link = eq.say_link("desc_" .. i, false, "[CLICK FOR DESCRIPTION]")
+            client:Message(MT.White, pick_link .. "   " .. desc_link)
         end
     end
     if rare_item_id then
         local entry = RARE_ITEMS[rare_item_id]
         if entry then
             local slot = #choices + 1
-            local link = eq.say_link(tostring(slot), false,
-                string.format("  [%d: %s]  ", slot, entry.name))
-            client:Message(MT.Yellow, eq.item_link(rare_item_id) .. "  " .. link)
+            local pick_link = eq.say_link(tostring(slot), false,
+                string.format("[%d: %s]", slot, entry.name))
+            -- item_link lets the player right-click to inspect the item
+            client:Message(MT.Yellow, pick_link .. "   " .. eq.item_link(rare_item_id))
         end
     end
-    local pass_link = eq.say_link("pass", false, "  [Pass - No Reward This Level]  ")
+    local pass_link = eq.say_link("pass", false, "[Pass - No Reward This Level]")
     client:Message(MT.Gray, pass_link)
     client:Message(MT.LightBlue, "================================================")
 end
@@ -324,6 +329,25 @@ end
 
 function M.on_say(client, message)
     local char_id = client:CharacterID()
+
+    -- Description peek: player clicked [CLICK FOR DESCRIPTION] for spell N
+    local desc_n = tonumber(message:match("^desc_(%d)$"))
+    if desc_n then
+        local ids, _ = parse_pending(char_id)
+        if ids and ids[desc_n] then
+            local e = _pool and _pool[ids[desc_n]]
+            if e then
+                local mn = (e.mana and e.mana > 0) and ("Mana: " .. e.mana) or "No Cost"
+                local ct = (e.cast_ms and e.cast_ms > 0)
+                    and string.format("Cast: %.1fs", e.cast_ms / 1000) or "Instant"
+                local en = EXPAC_NAMES[e.expac] or "Classic"
+                client:Message(MT.Yellow, string.format(
+                    "%s  |  %s  |  %s  |  %s  |  %s",
+                    e.name, e.desc or "Spell", mn, ct, en))
+            end
+        end
+        return true
+    end
 
     if message == "pass" then
         local _, level_num = parse_pending(char_id)

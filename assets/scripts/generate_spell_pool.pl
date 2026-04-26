@@ -145,6 +145,7 @@ my $sth = $dbh->prepare(q{
         s.cast_time,
         s.targettype,
         s.SpellAffectIndex,
+        s.effectid1,
         s.icon,
         LEAST(
             IF(s.classes1  < 255, s.classes1,  999),
@@ -208,6 +209,7 @@ while (my $row = $sth->fetchrow_hashref()) {
         mana      => $row->{mana}      || 0,
         cast_ms   => $row->{cast_time} || 0,   # spells_new.cast_time is in ms
         icon      => $row->{icon} || 0,
+        effectid1 => $row->{effectid1} || 0,
         desc      => get_spell_desc($row->{SpellAffectIndex}, $row->{targettype}),
     };
 }
@@ -255,9 +257,9 @@ for my $sp (@spells) {
     $desc_esc =~ s/\\/\\\\/g;
     $desc_esc =~ s/"/\\"/g;
     printf $out
-        "    [%d] = { level=%d, name=\"%s\", scroll_id=%d, expac=%d, mana=%d, cast_ms=%d, icon=%d, desc=\"%s\" },\n",
+        "    [%d] = { level=%d, name=\"%s\", scroll_id=%d, expac=%d, mana=%d, cast_ms=%d, icon=%d, effectid1=%d, desc=\"%s\" },\n",
         $sp->{id}, $sp->{level}, $name_esc, $sp->{scroll_id}, $sp->{expac},
-        $sp->{mana}, $sp->{cast_ms}, $sp->{icon}, $desc_esc;
+        $sp->{mana}, $sp->{cast_ms}, $sp->{icon}, $sp->{effectid1}, $desc_esc;
 }
 
 print $out <<'FOOTER';
