@@ -1,0 +1,156 @@
+version: "3.9"
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  mariadb-var-log:
+  eqemu-var-log:
+  build-cache:
+  spire-assets:
+
+services:
+
+  mariadb:
+    image: akk-stack-mariadb
+    build:
+      context: ./containers/mariadb
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-US/Central}
+      MYSQL_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MYSQL_ALLOW_EMPTY_PASSWORD: "NO"
+      MYSQL_DATABASE: ${MARIADB_DATABASE}
+      MYSQL_USER: ${MARIADB_USER}
+      MYSQL_PASSWORD: ${MARIADB_PASSWORD}
+    volumes:
+      - ./data/mariadb:/var/lib/mysql
+      - mariadb-var-log:/var/log/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - backend
+
+  eqemu-server:
+    image: eqemulator/eqemu-server:v16
+    restart: unless-stopped
+    cap_add:
+      - CAP_SYS_PTRACE
+    environment:
+      TZ: ${TZ:-US/Central}
+      IP_ADDRESS: ${IP_ADDRESS}
+      SERVER_PASSWORD: ${SERVER_PASSWORD}
+      SPIRE_ADMIN_PASSWORD: ${SPIRE_ADMIN_PASSWORD}
+      SPIRE_PORT: "3000"
+      PEQ_EDITOR_PASSWORD: ${PEQ_EDITOR_PASSWORD}
+      EQEMU_DB_PASSWORD: ${MARIADB_PASSWORD}
+      PORT_RANGE_HIGH: "7030"
+      PUID: "1000"
+      PGID: "1000"
+    volumes:
+      - ./server:/home/eqemu/server
+      - ./code:/home/eqemu/code
+      - ./assets:/home/eqemu/assets
+      - build-cache:/home/eqemu/.ccache
+      - spire-assets:/home/eqemu/.cache
+      - eqemu-var-log:/var/log
+    ports:
+      - "2222:22/tcp"
+      - "2222:22/udp"
+      - "3000:3000"
+      - "3001:3001"
+      - "3002:3002"
+      - "3003:3003"
+      - "3004:3004"
+      - "3005:3005"
+      - "3006:3006"
+      - "3007:3007"
+      - "3008:3008"
+      - "3009:3009"
+      - "3010:3010"
+      - "5998:5998/tcp"
+      - "5998:5998/udp"
+      - "5999:5999/tcp"
+      - "5999:5999/udp"
+      - "6000:6000"
+      - "7000-7030:7000-7030/udp"
+      - "7778:7778/tcp"
+      - "7778:7778/udp"
+      - "8080:8080"
+      - "9000:9000/tcp"
+      - "9000:9000/udp"
+      - "9001:9001/tcp"
+      - "9001:9001/udp"
+      - "9500:9500/tcp"
+      - "9500:9500/udp"
+    depends_on:
+      - mariadb
+    networks:
+      - backend
+
+  peq-editor:
+    image: eqemulator/peq-editor:latest
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-US/Central}
+      DB_HOST: mariadb
+      DB_NAME: ${MARIADB_DATABASE}
+      DB_USER: ${MARIADB_USER}
+      DB_PASSWORD: ${MARIADB_PASSWORD}
+    volumes:
+      - ./data/peq-editor:/var/www/html
+    depends_on:
+      - mariadb
+    networks:
+      - backend
+
+  peq-editor-proxy:
+    image: akk-stack-peq-editor-proxy
+    build:
+      context: ./containers/nginx-proxy
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-US/Central}
+      BASIC_AUTH_USERNAME: admin
+      BASIC_AUTH_PASSWORD: ${PEQ_EDITOR_PROXY_PASSWORD}
+      PROXY_PASS: http://peq-editor
+    ports:
+      - "8081:80"
+    depends_on:
+      - peq-editor
+    networks:
+      - backend
+
+  fail2ban-server:
+    image: akk-stack-fail2ban-server
+    build:
+      context: ./containers/fail2ban-server
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-US/Central}
+      F2B_LOG_LEVE: DEBUG
+      F2B_DB_PURGE_AGE: 30d
+      F2B_MAX_RETRY: "3"
+      F2B_ACTION: "%(action_)s"
+      F2B_IPTABLES_CHAIN: DOCKER-USER
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/log:/var/log
+      - eqemu-var-log:/eqemu/var/log
+    network_mode: host
+
+  fail2ban-mysqld:
+    image: akk-stack-fail2ban-mysqld
+    build:
+      context: ./containers/fail2ban-mysqld
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-US/Central}
+      F2B_LOG_LEVE: DEBUG
+      F2B_DB_PURGE_AGE: 30d
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/log:/var/log
+      - mariadb-var-log:/mariadb/var/log/mysql
+    network_mode: host
