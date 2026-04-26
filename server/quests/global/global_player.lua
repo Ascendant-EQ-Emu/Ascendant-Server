@@ -66,6 +66,10 @@ function event_aa_buy(e)
     client:Message(MT.Yellow, 'You are reborn at level 1 and receive 10 Prestige Tokens. Return them to the Prestige Keeper for power.')
 end
 
+function event_command(e)
+    eq.DispatchCommands(e)
+end
+
 function event_say(e)
     spell_award.on_say(e.self, e.message)
 end

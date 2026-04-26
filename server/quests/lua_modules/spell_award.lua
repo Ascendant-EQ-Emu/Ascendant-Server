@@ -2,35 +2,83 @@
 -- spell_award.lua
 -- Custom Spell Unlock System for Ascendant EQEmu Server
 --
--- Flow:
---   1. Character levels up → HTML table popup (5 spells) + 5 chat saylinks
---   2. Player reads popup, closes it
---   3. Player clicks a saylink in chat → event_say → spell scribed
---
--- Popup ID:
---   SA_INFO (1000) = OK-only dismiss, no spell action
+-- IMPORTANT: _init() runs at require() time (zone startup),
+-- NOT during live events. This avoids compiling the 1.4MB
+-- spell_pool.lua mid-event which crashes the zone.
 -- ============================================================
 
 local M = {}
 
 local SA_INFO = 1000
 
-local _pool = nil
-local function get_pool()
-    if not _pool then
-        local ok, mod = pcall(require, "spell_pool")
-        if not ok or not mod or not mod.pool then return nil end
-        _pool = mod.pool
+-- ---- Rare item pool (manually curated) -------------------------
+-- Add item IDs here to include them in the 15% rare offer.
+local RARE_ITEMS = {
+    [5401] = { name = "Mithril Two-Handed Sword", desc = "2H Sword" },
+}
+
+-- ---- Module-level init (runs once at zone startup) -------------
+
+local _pool  = nil   -- spell_pool.pool table
+local _index = nil   -- _index[expac][level] = { spell_id, ... }
+
+local function _init()
+    local ok, mod = pcall(require, "spell_pool")
+    if not ok or not mod or not mod.pool then return end
+    _pool  = mod.pool
+    _index = {}
+    for spell_id, data in pairs(_pool) do
+        local e = data.expac or 0
+        local l = data.level or 1
+        if not _index[e] then _index[e] = {} end
+        if not _index[e][l] then _index[e][l] = {} end
+        local b = _index[e][l]
+        b[#b + 1] = spell_id
     end
-    return _pool
 end
 
--- ---- Expansion display ------------------------------------------
+_init()  -- heavy work happens here at zone load, not during events
+
+-- ---- Scribed set (400 book-slot reads, single pass) ------------
+
+local function get_scribed(client)
+    local scribed = {}
+    for slot = 0, 399 do
+        local sid = client:GetSpellIDByBookSlot(slot)
+        if sid and sid > 0 and sid < 60000 then
+            scribed[sid] = true
+        end
+    end
+    return scribed
+end
+
+-- ---- Eligible list from pre-built index ------------------------
+
+local function get_eligible(level, max_expac, scribed)
+    if not _index then return {} end
+    local eligible = {}
+    for expac = 0, max_expac do
+        local eb = _index[expac]
+        if eb then
+            for lv = 1, level + 5 do
+                local lb = eb[lv]
+                if lb then
+                    for _, spell_id in ipairs(lb) do
+                        if not scribed[spell_id] then
+                            eligible[#eligible + 1] = spell_id
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return eligible
+end
+
+-- ---- Expansion display -----------------------------------------
 
 local EXPAC_NAMES  = { [0]="Classic", [1]="Kunark", [2]="Velious", [3]="Luclin+" }
 local EXPAC_COLORS = { [0]="#999999", [1]="#66BB44", [2]="#4499CC", [3]="#AA55CC" }
-
--- ---- Type color based on description ----------------------------
 
 local function type_color(desc)
     if not desc then return "#AAAAAA" end
@@ -45,7 +93,7 @@ local function type_color(desc)
     return "#AAAAAA"
 end
 
--- ---- Expansion unlock -------------------------------------------
+-- ---- Expansion unlock ------------------------------------------
 
 local function get_max_expac(char_id)
     local k = tostring(char_id)
@@ -55,10 +103,11 @@ local function get_max_expac(char_id)
     return 0
 end
 
--- ---- Data bucket helpers ----------------------------------------
+-- ---- Data bucket helpers ---------------------------------------
 
 local function bucket_done(char_id)    return "sa_done:"    .. char_id end
 local function bucket_pending(char_id) return "sa_pending:" .. char_id end
+local function bucket_rare(char_id)    return "sa_rare:"    .. char_id end
 
 local function level_already_awarded(char_id, level)
     local done = eq.get_data(bucket_done(char_id))
@@ -81,11 +130,21 @@ local function parse_pending(char_id)
     local spell_part, level_str = raw:match("^(.+):(%d+)$")
     if not spell_part then return nil, nil end
     local ids = {}
-    for s in spell_part:gmatch("%d+") do ids[#ids+1] = tonumber(s) end
+    for s in spell_part:gmatch("%d+") do ids[#ids + 1] = tonumber(s) end
     return ids, tonumber(level_str)
 end
 
--- ---- Random pick (Fisher-Yates partial) -------------------------
+local function get_pending_rare(char_id)
+    local raw = eq.get_data(bucket_rare(char_id))
+    return (raw and raw ~= "") and tonumber(raw) or nil
+end
+
+local function clear_pending(char_id)
+    eq.delete_data(bucket_pending(char_id))
+    eq.delete_data(bucket_rare(char_id))
+end
+
+-- ---- Random pick (Fisher-Yates partial) ------------------------
 
 local function pick_random(list, count)
     local result, n = {}, #list
@@ -98,11 +157,10 @@ local function pick_random(list, count)
     return result
 end
 
--- ---- Award spell ------------------------------------------------
+-- ---- Award spell -----------------------------------------------
 
 local function award_spell(client, spell_id)
-    local pool  = get_pool()
-    local entry = pool and pool[spell_id]
+    local entry = _pool and _pool[spell_id]
     if not entry then return false end
     local slot = client:GetNextAvailableSpellBookSlot()
     if slot < 0 then
@@ -114,17 +172,15 @@ local function award_spell(client, spell_id)
     return true
 end
 
--- ---- Popup / chat helpers ---------------------------------------
+-- ---- Popup / chat helpers --------------------------------------
 
--- Strip chars that trigger special processing in DialogueWindow
 local function dw_safe(s)
     if not s then return "" end
     return s:gsub("[~%+=%[%]%{%}]", "")
 end
 
--- One table row for the popup body
-local function spell_row(pool, spell_id, num)
-    local e = pool[spell_id]
+local function spell_row(spell_id, num)
+    local e = _pool and _pool[spell_id]
     if not e then return "" end
     local ec = EXPAC_COLORS[e.expac] or "#999999"
     local en = EXPAC_NAMES[e.expac]  or "Classic"
@@ -133,41 +189,46 @@ local function spell_row(pool, spell_id, num)
     local ds = dw_safe(e.desc or "Spell")
     local mn = (e.mana and e.mana > 0) and ("Mana:" .. e.mana) or "Free"
     local ct = (e.cast_ms and e.cast_ms > 0)
-        and string.format("%.1fs", e.cast_ms / 1000)
-        or  "Instant"
+        and string.format("%.1fs", e.cast_ms / 1000) or "Instant"
     return string.format(
-        '<tr>'
-        .. '<td width=24><c "#FFCC44">%d</c>&nbsp;</td>'
+        '<tr><td width=24><c "#FFCC44">%d</c>&nbsp;</td>'
         .. '<td width=100><c "%s">%s</c>&nbsp;</td>'
-        .. '<td width=190><c "#FFFFFF">%s</c>&nbsp;</td>'
+        .. '<td width=180><c "#FFFFFF">%s</c>&nbsp;</td>'
         .. '<td width=70><c "%s">%s</c>&nbsp;</td>'
-        .. '<td><c "#888888">%s&nbsp;%s</c></td>'
-        .. '</tr>',
-        num,
-        tc, ds,
-        nm,
-        ec, en,
-        mn, ct
+        .. '<td><c "#888888">%s&nbsp;%s</c></td></tr>',
+        num, tc, ds, nm, ec, en, mn, ct
     )
 end
 
--- Show all choices in a single info popup (OK-only, no spell action)
-local function send_info_popup(client, choices, pool, level)
+local function rare_row(item_id, num)
+    local entry = RARE_ITEMS[item_id]
+    if not entry then return "" end
+    return string.format(
+        '<tr><td width=24><c "#FFCC44">%d</c>&nbsp;</td>'
+        .. '<td width=100><c "#FFD700">Rare Item</c>&nbsp;</td>'
+        .. '<td width=180><c "#FFD700">%s</c>&nbsp;</td>'
+        .. '<td width=70><c "#888888">--</c>&nbsp;</td>'
+        .. '<td><c "#888888">%s</c></td></tr>',
+        num, dw_safe(entry.name), dw_safe(entry.desc)
+    )
+end
+
+local function send_info_popup(client, choices, rare_item_id, level)
     local rows = ""
     for i = 1, #choices do
-        rows = rows .. spell_row(pool, choices[i], i)
+        rows = rows .. spell_row(choices[i], i)
+    end
+    if rare_item_id then
+        rows = rows .. rare_row(rare_item_id, #choices + 1)
     end
     local body = string.format(
         '<table width=500>'
-        .. '<tr>'
-        .. '<td width=24><c "#555555">#</c></td>'
+        .. '<tr><td width=24><c "#555555">#</c></td>'
         .. '<td width=100><c "#555555">Type</c></td>'
-        .. '<td width=190><c "#555555">Spell</c></td>'
+        .. '<td width=180><c "#555555">Spell / Item</c></td>'
         .. '<td width=70><c "#555555">Expac</c></td>'
-        .. '<td><c "#555555">Cost / Cast</c></td>'
-        .. '</tr>'
-        .. '%s'
-        .. '</table>'
+        .. '<td><c "#555555">Cost / Cast</c></td></tr>'
+        .. '%s</table>'
         .. '<br><c "#F07F00">Click your choice in the chat window below.</c>',
         rows
     )
@@ -177,67 +238,56 @@ local function send_info_popup(client, choices, pool, level)
     ))
 end
 
--- Send chat saylinks — item icon (from scroll) where available, then saylink
-local function send_choice_chat(client, choices, pool)
-    client:Message(MT.LightBlue, "===== SPELL AWARD  -  Click to Choose =====")
+local function send_choice_chat(client, choices, rare_item_id)
+    client:Message(MT.LightBlue, "===== REWARD AVAILABLE  -  Click to Choose =====")
     for i, spell_id in ipairs(choices) do
-        local e = pool[spell_id]
+        local e = _pool and _pool[spell_id]
         if e then
-            local link = eq.say_link(
-                tostring(i), false,
-                string.format("  [%d: %s]  ", i, e.name)
-            )
+            local link = eq.say_link(tostring(i), false,
+                string.format("  [%d: %s]  ", i, e.name))
             local icon = (e.scroll_id and e.scroll_id > 0)
-                and (eq.item_link(e.scroll_id) .. "  ")
-                or  ""
+                and (eq.item_link(e.scroll_id) .. "  ") or ""
             client:Message(MT.White, icon .. link)
         end
     end
-    local pass_link = eq.say_link("pass", false, "  [Pass - No Spell This Level]  ")
+    if rare_item_id then
+        local entry = RARE_ITEMS[rare_item_id]
+        if entry then
+            local slot = #choices + 1
+            local link = eq.say_link(tostring(slot), false,
+                string.format("  [%d: %s]  ", slot, entry.name))
+            client:Message(MT.Yellow, eq.item_link(rare_item_id) .. "  " .. link)
+        end
+    end
+    local pass_link = eq.say_link("pass", false, "  [Pass - No Reward This Level]  ")
     client:Message(MT.Gray, pass_link)
-    client:Message(MT.LightBlue, "===========================================")
+    client:Message(MT.LightBlue, "================================================")
 end
 
--- ---- Public: level-up -------------------------------------------
+-- ---- Public: level-up ------------------------------------------
 
 function M.on_level_up(client)
+    if not _pool then
+        client:Message(4, "Spell award system unavailable. Please contact a GM.")
+        return
+    end
+
     local char_id = client:CharacterID()
     local level   = client:GetLevel()
 
     if level_already_awarded(char_id, level) then return end
 
-    -- Re-show any pending unanswered offer
     local stale_ids, stale_level = parse_pending(char_id)
     if stale_ids then
-        local pool = get_pool()
-        if pool then
-            send_info_popup(client, stale_ids, pool, stale_level)
-            send_choice_chat(client, stale_ids, pool)
-        end
+        local stale_rare = get_pending_rare(char_id)
+        send_info_popup(client, stale_ids, stale_rare, stale_level)
+        send_choice_chat(client, stale_ids, stale_rare)
         return
-    end
-
-    local pool = get_pool()
-    if not pool then
-        client:Message(4, "Spell award system unavailable. Please contact a GM.")
-        return
-    end
-
-    -- Build scribed-spell set with a single API call instead of per-spell checks
-    local scribed = {}
-    local scribed_list = client:GetScribedSpells()
-    for _, sid in ipairs(scribed_list) do
-        scribed[sid] = true
     end
 
     local max_expac = get_max_expac(char_id)
-    local eligible  = {}
-    for spell_id, data in pairs(pool) do
-        -- Offer spells up to 5 levels beyond current level for variety
-        if data.level <= level + 5 and data.expac <= max_expac and not scribed[spell_id] then
-            eligible[#eligible + 1] = spell_id
-        end
-    end
+    local scribed   = get_scribed(client)
+    local eligible  = get_eligible(level, max_expac, scribed)
 
     if #eligible == 0 then
         client:Message(15, "You have learned all available spells at this level.")
@@ -245,21 +295,35 @@ function M.on_level_up(client)
         return
     end
 
-    local choices = pick_random(eligible, 5)
+    local choices = pick_random(eligible, 3)
     eq.set_data(bucket_pending(char_id), table.concat(choices, ",") .. ":" .. level)
 
-    send_info_popup(client, choices, pool, level)
-    send_choice_chat(client, choices, pool)
+    local rare_item_id = nil
+    local force_key = "sa_force_rare:" .. char_id
+    local force_rare = eq.get_data(force_key) == "1"
+    if force_rare then eq.delete_data(force_key) end
+
+    if force_rare or math.random(100) <= 15 then
+        local rare_pool = {}
+        for id, _ in pairs(RARE_ITEMS) do rare_pool[#rare_pool + 1] = id end
+        if #rare_pool > 0 then
+            rare_item_id = rare_pool[math.random(#rare_pool)]
+            eq.set_data(bucket_rare(char_id), tostring(rare_item_id))
+        end
+    end
+
+    send_info_popup(client, choices, rare_item_id, level)
+    send_choice_chat(client, choices, rare_item_id)
 end
 
--- ---- Public: popup response -------------------------------------
+-- ---- Public: popup response ------------------------------------
 
 function M.on_popup_response(client, popup_id)
-    if popup_id == SA_INFO then return true end  -- dismiss only
+    if popup_id == SA_INFO then return true end
     return false
 end
 
--- ---- Public: say handler (saylink clicks) -----------------------
+-- ---- Public: say handler ---------------------------------------
 
 function M.on_say(client, message)
     local char_id = client:CharacterID()
@@ -267,26 +331,42 @@ function M.on_say(client, message)
     if message == "pass" then
         local _, level_num = parse_pending(char_id)
         if level_num then mark_level_awarded(char_id, level_num) end
-        eq.delete_data(bucket_pending(char_id))
-        client:Message(MT.Gray, "You pass on this level's spell award.")
+        clear_pending(char_id)
+        client:Message(MT.Gray, "You pass on this level's reward.")
         return true
     end
 
-    local choice = message:match("^%s*([12345])%s*$")
-    if not choice then return false end
+    local choice = tonumber(message:match("^%s*(%d)%s*$"))
+    if not choice or choice < 1 then return false end
 
     local ids, level_num = parse_pending(char_id)
     if not ids then return false end
 
-    local spell_id = ids[tonumber(choice)]
-    if not spell_id then
-        client:Message(4, "Invalid spell choice. Please contact a GM.")
+    -- Rare item slot
+    if choice == #ids + 1 then
+        local item_id = get_pending_rare(char_id)
+        if item_id and RARE_ITEMS[item_id] then
+            client:SummonItem(item_id, 1)
+            client:Message(MT.Yellow, string.format(
+                "'%s' has been placed in your inventory.", RARE_ITEMS[item_id].name))
+            mark_level_awarded(char_id, level_num)
+            clear_pending(char_id)
+        else
+            client:Message(4, "Invalid choice. Please contact a GM.")
+        end
         return true
     end
 
+    -- Spell slot
+    if choice > #ids then
+        client:Message(4, "Invalid choice. Please contact a GM.")
+        return true
+    end
+
+    local spell_id = ids[choice]
     if award_spell(client, spell_id) then
         mark_level_awarded(char_id, level_num)
-        eq.delete_data(bucket_pending(char_id))
+        clear_pending(char_id)
         client:Message(15, "Spell award complete. Congratulations!")
     else
         client:Message(4, "Something went wrong. Please try again or contact a GM.")
