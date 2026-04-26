@@ -202,17 +202,18 @@ local function spell_block(spell_id, num)
     local tc = type_color(e.desc)
     local nm = dw_safe(e.name)
     local ds = dw_safe(e.desc or "")
+    local lv = "  Lv:" .. (e.level or 1)
     local mn = (e.mana and e.mana > 0) and ("  Mana:" .. e.mana) or ""
     local ct = (e.cast_ms and e.cast_ms > 0)
         and string.format("  Cast:%.1fs", e.cast_ms / 1000) or ""
     return string.format(
         '<c "#FFCC44">-- %d ------------------------------------------</c><br>'
         .. '<c "%s">%s</c>  <c "%s">%s</c><br>'
-        .. '<c "#888888">%s%s%s</c><br>',
+        .. '<c "#888888">%s%s%s%s</c><br>',
         num,
         tc, nm,
         ec, en,
-        ds, mn, ct
+        ds, lv, mn, ct
     )
 end
 
@@ -247,8 +248,9 @@ local function send_choice_chat(client, choices, rare_item_id)
         if e then
             local pick_link = eq.say_link(tostring(i), false,
                 string.format("[%d: %s]", i, e.name))
-            local desc_link = eq.say_link("desc_" .. i, false, "[CLICK FOR DESCRIPTION]")
-            client:Message(MT.White, pick_link .. "   " .. desc_link)
+            local scroll_link = (e.scroll_id and e.scroll_id > 0)
+                and ("   " .. eq.item_link(e.scroll_id)) or ""
+            client:Message(MT.White, pick_link .. scroll_link)
         end
     end
     if rare_item_id then
@@ -305,6 +307,7 @@ function M.on_level_up(client)
     local force_rare = eq.get_data(force_key) == "1"
     if force_rare then eq.delete_data(force_key) end
 
+    math.randomseed(os.time() + tonumber(char_id) * 7 + level * 37)
     if force_rare or math.random(100) <= 15 then
         local rare_pool = {}
         for id, _ in pairs(RARE_ITEMS) do rare_pool[#rare_pool + 1] = id end
@@ -329,25 +332,6 @@ end
 
 function M.on_say(client, message)
     local char_id = client:CharacterID()
-
-    -- Description peek: player clicked [CLICK FOR DESCRIPTION] for spell N
-    local desc_n = tonumber(message:match("^desc_(%d)$"))
-    if desc_n then
-        local ids, _ = parse_pending(char_id)
-        if ids and ids[desc_n] then
-            local e = _pool and _pool[ids[desc_n]]
-            if e then
-                local mn = (e.mana and e.mana > 0) and ("Mana: " .. e.mana) or "No Cost"
-                local ct = (e.cast_ms and e.cast_ms > 0)
-                    and string.format("Cast: %.1fs", e.cast_ms / 1000) or "Instant"
-                local en = EXPAC_NAMES[e.expac] or "Classic"
-                client:Message(MT.Yellow, string.format(
-                    "%s  |  %s  |  %s  |  %s  |  %s",
-                    e.name, e.desc or "Spell", mn, ct, en))
-            end
-        end
-        return true
-    end
 
     if message == "pass" then
         local _, level_num = parse_pending(char_id)
