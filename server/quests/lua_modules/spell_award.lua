@@ -202,9 +202,11 @@ local function spell_block(spell_id, num)
     local tc = type_color(e.desc)
     local nm = dw_safe(e.name)
     local ds = dw_safe(e.desc or "")
+    local lo = dw_safe(e.lore or "")
     local mn = (e.mana and e.mana > 0) and ("  Mana:" .. e.mana) or ""
     local ct = (e.cast_ms and e.cast_ms > 0)
         and string.format("  Cast:%.1fs", e.cast_ms / 1000) or ""
+    local lore_line = (lo ~= "") and ('<c "#777777">' .. lo .. '</c><br>') or ""
     return string.format(
         '<c "#FFCC44">-- %d ------------------------------------------</c><br>'
         .. '<c "%s">%s</c> - <c "#AAAAAA">Level %d</c> - <c "%s">%s</c><br>'
@@ -214,7 +216,7 @@ local function spell_block(spell_id, num)
         e.level or 1,
         ec, en,
         ds, mn, ct
-    )
+    ) .. lore_line
 end
 
 local function send_info_popup(client, choices, rare_item_id, level)

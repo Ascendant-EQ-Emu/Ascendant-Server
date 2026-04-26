@@ -79,6 +79,24 @@ my %spell_level;
 }
 printf "Loaded level data for %d spells from spells_us.txt.\n", scalar keys %spell_level;
 
+# ---- Read spell description text from dbstr_us.txt -------------
+# Format: id^type^text^0   (type 6 = spell descriptions, id = spell_id)
+my $dbstr_path = '/home/eqemu/server/export/dbstr_us.txt';
+$dbstr_path = 'server/export/dbstr_us.txt' unless -f $dbstr_path;
+
+my %spell_lore;
+{
+    open(my $dfh, '<', $dbstr_path) or die "Cannot read $dbstr_path: $!";
+    while (my $line = <$dfh>) {
+        chomp $line;
+        my ($id, $type, $text) = split(/\^/, $line, 4);
+        next unless defined $type && $type eq '6' && $id =~ /^\d+$/;
+        $spell_lore{$id} = $text // "";
+    }
+    close $dfh;
+}
+printf "Loaded descriptions for %d spells from dbstr_us.txt.\n", scalar keys %spell_lore;
+
 # ---- Generate modified spells_us.txt for client distribution ----
 # Sets all non-255 class levels to 1 so players can memorize any
 # awarded spell regardless of character level.  Copy this file to
@@ -246,6 +264,7 @@ while (my $row = $sth->fetchrow_hashref()) {
         icon      => $row->{icon} || 0,
         effectid1 => $row->{effectid1} || 0,
         desc      => get_spell_desc($row->{SpellAffectIndex}, $row->{targettype}),
+        lore      => $spell_lore{ $row->{id} } // "",
     };
 }
 $sth->finish();
@@ -291,10 +310,13 @@ for my $sp (@spells) {
     my $desc_esc = $sp->{desc};
     $desc_esc =~ s/\\/\\\\/g;
     $desc_esc =~ s/"/\\"/g;
+    my $lore_esc = $sp->{lore};
+    $lore_esc =~ s/\\/\\\\/g;
+    $lore_esc =~ s/"/\\"/g;
     printf $out
-        "    [%d] = { level=%d, name=\"%s\", scroll_id=%d, expac=%d, mana=%d, cast_ms=%d, icon=%d, effectid1=%d, desc=\"%s\" },\n",
+        "    [%d] = { level=%d, name=\"%s\", scroll_id=%d, expac=%d, mana=%d, cast_ms=%d, icon=%d, effectid1=%d, desc=\"%s\", lore=\"%s\" },\n",
         $sp->{id}, $sp->{level}, $name_esc, $sp->{scroll_id}, $sp->{expac},
-        $sp->{mana}, $sp->{cast_ms}, $sp->{icon}, $sp->{effectid1}, $desc_esc;
+        $sp->{mana}, $sp->{cast_ms}, $sp->{icon}, $sp->{effectid1}, $desc_esc, $lore_esc;
 }
 
 print $out <<'FOOTER';
