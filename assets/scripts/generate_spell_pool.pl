@@ -144,8 +144,8 @@ my $sth = $dbh->prepare(q{
         s.mana,
         s.cast_time,
         s.targettype,
-        s.spell_affect_index,
-        s.spell_icon,
+        s.SpellAffectIndex,
+        s.icon,
         LEAST(
             IF(s.classes1  < 255, s.classes1,  999),
             IF(s.classes2  < 255, s.classes2,  999),
@@ -207,8 +207,8 @@ while (my $row = $sth->fetchrow_hashref()) {
         expac     => spell_expac($row->{id}),
         mana      => $row->{mana}      || 0,
         cast_ms   => $row->{cast_time} || 0,   # spells_new.cast_time is in ms
-        icon      => $row->{spell_icon} || 0,
-        desc      => get_spell_desc($row->{spell_affect_index}, $row->{targettype}),
+        icon      => $row->{icon} || 0,
+        desc      => get_spell_desc($row->{SpellAffectIndex}, $row->{targettype}),
     };
 }
 $sth->finish();
