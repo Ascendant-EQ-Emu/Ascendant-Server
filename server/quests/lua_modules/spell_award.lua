@@ -202,18 +202,18 @@ local function spell_block(spell_id, num)
     local tc = type_color(e.desc)
     local nm = dw_safe(e.name)
     local ds = dw_safe(e.desc or "")
-    local lv = "  Lv:" .. (e.level or 1)
     local mn = (e.mana and e.mana > 0) and ("  Mana:" .. e.mana) or ""
     local ct = (e.cast_ms and e.cast_ms > 0)
         and string.format("  Cast:%.1fs", e.cast_ms / 1000) or ""
     return string.format(
         '<c "#FFCC44">-- %d ------------------------------------------</c><br>'
-        .. '<c "%s">%s</c>  <c "%s">%s</c><br>'
-        .. '<c "#888888">%s%s%s%s</c><br>',
+        .. '<c "%s">%s</c> - <c "#AAAAAA">Level %d</c> - <c "%s">%s</c><br>'
+        .. '<c "#888888">%s%s%s</c><br>',
         num,
         tc, nm,
+        e.level or 1,
         ec, en,
-        ds, lv, mn, ct
+        ds, mn, ct
     )
 end
 
