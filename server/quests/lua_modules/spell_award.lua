@@ -54,6 +54,15 @@ end
 
 -- ---- Eligible list from pre-built index ------------------------
 
+local function is_excluded(data)
+    local ds = data.desc or ""
+    -- Exclude illusion spells and spells whose type is "Summon" (item/corpse summons)
+    -- "Summon$" matches "Summon", "Self Summon", "Group Summon" but NOT "Summon DD"
+    if ds:find("Illusion") then return true end
+    if ds:find("Summon$")  then return true end
+    return false
+end
+
 local function get_eligible(level, max_expac, scribed)
     if not _index then return {} end
     local eligible = {}
@@ -64,7 +73,8 @@ local function get_eligible(level, max_expac, scribed)
                 local lb = eb[lv]
                 if lb then
                     for _, spell_id in ipairs(lb) do
-                        if not scribed[spell_id] then
+                        local data = _pool[spell_id]
+                        if data and not scribed[spell_id] and not is_excluded(data) then
                             eligible[#eligible + 1] = spell_id
                         end
                     end
@@ -179,59 +189,46 @@ local function dw_safe(s)
     return s:gsub("[~%+=%[%]%{%}]", "")
 end
 
-local function spell_row(spell_id, num)
+local function spell_block(spell_id, num)
     local e = _pool and _pool[spell_id]
     if not e then return "" end
     local ec = EXPAC_COLORS[e.expac] or "#999999"
     local en = EXPAC_NAMES[e.expac]  or "Classic"
     local tc = type_color(e.desc)
     local nm = dw_safe(e.name)
-    local ds = dw_safe(e.desc or "Spell")
-    local mn = (e.mana and e.mana > 0) and ("Mana:" .. e.mana) or "Free"
+    local ds = dw_safe(e.desc or "")
+    local mn = (e.mana and e.mana > 0) and ("  Mana:" .. e.mana) or ""
     local ct = (e.cast_ms and e.cast_ms > 0)
-        and string.format("%.1fs", e.cast_ms / 1000) or "Instant"
+        and string.format("  Cast:%.1fs", e.cast_ms / 1000) or ""
     return string.format(
-        '<tr><td width=24><c "#FFCC44">%d</c>&nbsp;</td>'
-        .. '<td width=100><c "%s">%s</c>&nbsp;</td>'
-        .. '<td width=180><c "#FFFFFF">%s</c>&nbsp;</td>'
-        .. '<td width=70><c "%s">%s</c>&nbsp;</td>'
-        .. '<td><c "#888888">%s&nbsp;%s</c></td></tr>',
-        num, tc, ds, nm, ec, en, mn, ct
-    )
-end
-
-local function rare_row(item_id, num)
-    local entry = RARE_ITEMS[item_id]
-    if not entry then return "" end
-    return string.format(
-        '<tr><td width=24><c "#FFCC44">%d</c>&nbsp;</td>'
-        .. '<td width=100><c "#FFD700">Rare Item</c>&nbsp;</td>'
-        .. '<td width=180><c "#FFD700">%s</c>&nbsp;</td>'
-        .. '<td width=70><c "#888888">--</c>&nbsp;</td>'
-        .. '<td><c "#888888">%s</c></td></tr>',
-        num, dw_safe(entry.name), dw_safe(entry.desc)
+        '<c "#FFCC44">-- %d ------------------------------------------</c><br>'
+        .. '<c "%s">%s</c>  <c "%s">%s</c><br>'
+        .. '<c "#888888">%s%s%s</c><br>',
+        num,
+        tc, nm,
+        ec, en,
+        ds, mn, ct
     )
 end
 
 local function send_info_popup(client, choices, rare_item_id, level)
-    local rows = ""
+    local body = ""
     for i = 1, #choices do
-        rows = rows .. spell_row(choices[i], i)
+        body = body .. spell_block(choices[i], i)
     end
     if rare_item_id then
-        rows = rows .. rare_row(rare_item_id, #choices + 1)
+        local entry = RARE_ITEMS[rare_item_id]
+        if entry then
+            body = body .. string.format(
+                '<c "#FFCC44">-- %d ------------------------------------------</c><br>'
+                .. '<c "#FFD700">%s</c><br>'
+                .. '<c "#888888">Rare Item</c><br>',
+                #choices + 1,
+                dw_safe(entry.name)
+            )
+        end
     end
-    local body = string.format(
-        '<table width=500>'
-        .. '<tr><td width=24><c "#555555">#</c></td>'
-        .. '<td width=100><c "#555555">Type</c></td>'
-        .. '<td width=180><c "#555555">Spell / Item</c></td>'
-        .. '<td width=70><c "#555555">Expac</c></td>'
-        .. '<td><c "#555555">Cost / Cast</c></td></tr>'
-        .. '%s</table>'
-        .. '<br><c "#F07F00">Click your choice in the chat window below.</c>',
-        rows
-    )
+    body = body .. '<c "#F07F00">Click your choice in the chat window below.</c>'
     client:DialogueWindow(string.format(
         "{title:Spell Award - Level %d}popupid:%d hiddenresponse noquotes%s",
         level, SA_INFO, body
