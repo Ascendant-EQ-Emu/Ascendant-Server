@@ -14,12 +14,24 @@ local SA_INFO = 1000
 -- ---- Rare item pool (manually curated) -------------------------
 -- Add item IDs here to include them in the 15% rare offer.
 local RARE_ITEMS = {
-    [5401]  = { name = "Mithril Two-Handed Sword",        desc = "2H Sword"  },
-    [13401] = { name = "Manastone",                       desc = "Legendary" },
-    [711621]= { name = "Cloak of Flames (Ascendant)",     desc = "Back"      },
-    [705667]= { name = "Earthshaker (Ascendant)",         desc = "2H Blunt"  },
-    [711551]= { name = "Shield of the Immaculate (Ascendant)", desc = "Shield" },
-    [711601]= { name = "Runed Bolster Belt (Ascendant)",  desc = "Waist"     },
+    [705401] = { name = "Mithril Two-Handed Sword (Ascendant)",    desc = "2H Sword"   },
+    [13401]  = { name = "Manastone",                               desc = "Legendary"  },
+    [711621] = { name = "Cloak of Flames (Ascendant)",             desc = "Back"       },
+    [705667] = { name = "Earthshaker (Ascendant)",                 desc = "2H Blunt"   },
+    [711551] = { name = "Shield of the Immaculate (Ascendant)",    desc = "Shield"     },
+    [711601] = { name = "Runed Bolster Belt (Ascendant)",          desc = "Waist"      },
+    [705500] = { name = "Short Sword of the Ykesha (Ascendant)",   desc = "1H Slash"   },
+    [701554] = { name = "Brain of Cazic-Thule (Ascendant)",        desc = "Focus"      },
+    [11627]  = { name = "Red Dragon Tooth",                        desc = "Earring"    },
+    [706342] = { name = "Staff of Temperate Flux (Ascendant)",     desc = "2H Magic"   },
+    [704842] = { name = "Umbral Platemail Breastplate (Ascendant)",desc = "Chest"      },
+    [704407] = { name = "Golden Efreeti Boots (Ascendant)",        desc = "Feet"       },
+    [701557] = { name = "Shawl of Protection (Ascendant)",         desc = "Back"       },
+    [710366] = { name = "Djarn's Amethyst Ring (Ascendant)",       desc = "Ring"       },
+    [711624] = { name = "Gauntlets of Fiery Might (Ascendant)",    desc = "Hands"      },
+    [704836] = { name = "Lustrous Russet Greaves (Ascendant)",     desc = "Legs"       },
+    [710142] = { name = "Crown of the Froglok Kings (Ascendant)",  desc = "Head"       },
+    [710901] = { name = "Mosscovered Twig (Ascendant)",            desc = "1H Blunt"   },
 }
 
 -- ---- Module-level init (runs once at zone startup) -------------
@@ -287,8 +299,22 @@ function M.on_level_up(client)
     local stale_ids, stale_level = parse_pending(char_id)
     if stale_ids then
         local stale_rare = get_pending_rare(char_id)
-        send_info_popup(client, stale_ids, stale_rare, stale_level)
-        send_choice_chat(client, stale_ids, stale_rare)
+        -- Re-filter in case the player scribed any of the pending spells since the offer
+        local current_scribed = get_scribed(client)
+        local filtered = {}
+        for _, sid in ipairs(stale_ids) do
+            if not current_scribed[sid] then
+                filtered[#filtered + 1] = sid
+            end
+        end
+        if #filtered == 0 and not stale_rare then
+            mark_level_awarded(char_id, stale_level)
+            clear_pending(char_id)
+            client:Message(15, "You have learned all available spells at this level.")
+            return
+        end
+        send_info_popup(client, filtered, stale_rare, stale_level)
+        send_choice_chat(client, filtered, stale_rare)
         return
     end
 
