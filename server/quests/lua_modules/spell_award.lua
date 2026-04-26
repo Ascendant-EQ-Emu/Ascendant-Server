@@ -3,8 +3,8 @@
 -- Custom Spell Unlock System for Ascendant EQEmu Server
 --
 -- Flow:
---   1. Character levels up → info popup + 3 chat saylinks
---   2. Player reads popup (all 3 spells visible at once), closes it
+--   1. Character levels up → HTML table popup (5 spells) + 5 chat saylinks
+--   2. Player reads popup, closes it
 --   3. Player clicks a saylink in chat → event_say → spell scribed
 --
 -- Popup ID:
@@ -122,37 +122,55 @@ local function dw_safe(s)
     return s:gsub("[~%+=%[%]%{%}]", "")
 end
 
--- One spell block for the popup body
-local function spell_block(pool, spell_id, num)
+-- One table row for the popup body
+local function spell_row(pool, spell_id, num)
     local e = pool[spell_id]
     if not e then return "" end
     local ec = EXPAC_COLORS[e.expac] or "#999999"
     local en = EXPAC_NAMES[e.expac]  or "Classic"
     local tc = type_color(e.desc)
     local nm = dw_safe(e.name)
-    local ds = dw_safe(e.desc or "")
-    local mn = (e.mana and e.mana > 0) and ("  Mana:" .. e.mana) or ""
+    local ds = dw_safe(e.desc or "Spell")
+    local mn = (e.mana and e.mana > 0) and ("Mana:" .. e.mana) or "Free"
     local ct = (e.cast_ms and e.cast_ms > 0)
-        and string.format("  Cast:%.1fs", e.cast_ms / 1000)
-        or  ""
+        and string.format("%.1fs", e.cast_ms / 1000)
+        or  "Instant"
     return string.format(
-        '<c "#FFCC44">-- %d -----------------------------------------------</c><br>'
-        .. '<c "%s">* </c><c "#FFFFFF">%s</c>   <c "%s">%s</c><br>'
-        .. '<c "#888888">%s%s%s</c><br>',
+        '<tr>'
+        .. '<td width=24><c "#FFCC44">%d</c>&nbsp;</td>'
+        .. '<td width=100><c "%s">%s</c>&nbsp;</td>'
+        .. '<td width=190><c "#FFFFFF">%s</c>&nbsp;</td>'
+        .. '<td width=70><c "%s">%s</c>&nbsp;</td>'
+        .. '<td><c "#888888">%s&nbsp;%s</c></td>'
+        .. '</tr>',
         num,
-        tc, nm,
+        tc, ds,
+        nm,
         ec, en,
-        ds, mn, ct
+        mn, ct
     )
 end
 
 -- Show all choices in a single info popup (OK-only, no spell action)
 local function send_info_popup(client, choices, pool, level)
-    local body = ""
+    local rows = ""
     for i = 1, #choices do
-        body = body .. spell_block(pool, choices[i], i)
+        rows = rows .. spell_row(pool, choices[i], i)
     end
-    body = body .. '<c "#F07F00">Click your choice in the chat window below.</c>'
+    local body = string.format(
+        '<table width=500>'
+        .. '<tr>'
+        .. '<td width=24><c "#555555">#</c></td>'
+        .. '<td width=100><c "#555555">Type</c></td>'
+        .. '<td width=190><c "#555555">Spell</c></td>'
+        .. '<td width=70><c "#555555">Expac</c></td>'
+        .. '<td><c "#555555">Cost / Cast</c></td>'
+        .. '</tr>'
+        .. '%s'
+        .. '</table>'
+        .. '<br><c "#F07F00">Click your choice in the chat window below.</c>',
+        rows
+    )
     client:DialogueWindow(string.format(
         "{title:Spell Award - Level %d}popupid:%d hiddenresponse noquotes%s",
         level, SA_INFO, body
@@ -208,7 +226,8 @@ function M.on_level_up(client)
     local max_expac = get_max_expac(char_id)
     local eligible  = {}
     for spell_id, data in pairs(pool) do
-        if data.level <= level and data.expac <= max_expac then
+        -- Offer spells up to 5 levels beyond current level for variety
+        if data.level <= level + 5 and data.expac <= max_expac then
             if not client:HasSpellScribed(spell_id) then
                 eligible[#eligible + 1] = spell_id
             end
@@ -221,7 +240,7 @@ function M.on_level_up(client)
         return
     end
 
-    local choices = pick_random(eligible, 3)
+    local choices = pick_random(eligible, 5)
     eq.set_data(bucket_pending(char_id), table.concat(choices, ",") .. ":" .. level)
 
     send_info_popup(client, choices, pool, level)
@@ -248,7 +267,7 @@ function M.on_say(client, message)
         return true
     end
 
-    local choice = message:match("^%s*([123])%s*$")
+    local choice = message:match("^%s*([12345])%s*$")
     if not choice then return false end
 
     local ids, level_num = parse_pending(char_id)
