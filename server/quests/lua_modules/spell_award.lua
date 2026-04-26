@@ -228,9 +228,9 @@ local function send_info_popup(client, choices, rare_item_id, level)
         local entry = RARE_ITEMS[rare_item_id]
         if entry then
             body = body .. string.format(
-                '<c "#FFCC44">-- %d ------------------------------------------</c><br>'
+                '<c "#FFD700">== %d == *** RARE ITEM *** ==========================</c><br>'
                 .. '<c "#FFD700">%s</c><br>'
-                .. '<c "#888888">Rare Item</c><br>',
+                .. '<c "#AAAAAA">A rare and powerful item has found its way to you!</c><br>',
                 #choices + 1,
                 dw_safe(entry.name)
             )
@@ -261,8 +261,9 @@ local function send_choice_chat(client, choices, rare_item_id)
             local slot = #choices + 1
             local pick_link = eq.say_link(tostring(slot), false,
                 string.format("[%d: %s]", slot, entry.name))
-            -- item_link lets the player right-click to inspect the item
+            client:Message(MT.Yellow, "*** A RARE ITEM HAS APPEARED! ***")
             client:Message(MT.Yellow, pick_link .. "   " .. eq.item_link(rare_item_id))
+            client:Message(MT.Yellow, "**********************************")
         end
     end
     local pass_link = eq.say_link("pass", false, "[Pass - No Reward This Level]")
