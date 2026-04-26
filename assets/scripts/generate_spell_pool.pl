@@ -10,6 +10,10 @@
 #   name      = spell name
 #   scroll_id = item ID of cheapest matching scroll (0 = none)
 #   expac     = 0:Classic  1:Kunark  2:Velious  3:Luclin+
+#   mana      = mana cost (0 = free)
+#   cast_ms   = cast time in milliseconds (0 = instant)
+#   icon      = spell icon index from spells_new.spell_icon
+#   desc      = short auto-generated description e.g. "Group Heal", "AoE DD"
 #
 # Expansion unlock is checked at award time via Aurelian Stoneward flags:
 #   classic_awarded_{char_id} => Kunark (expac 1) unlocked
@@ -66,14 +70,82 @@ while (my $row = $scroll_sth->fetchrow_hashref()) {
 $scroll_sth->finish();
 printf "  %d spells have scroll items.\n", scalar keys %scroll_map;
 
+# ---- Spell description helpers -----------------------------
+
+# spell_affect_index → concise type label
+my %SAI_LABEL = (
+    0  => "DD",           1  => "Heal",
+    2  => "AC Buff",      3  => "AoE DD",
+    4  => "Summon",       5  => "Vision",
+    6  => "Mana",         7  => "Stat Buff",
+    9  => "Invis",        10 => "Illusion",
+    11 => "Charm",        12 => "Calm",
+    13 => "Fear",         14 => "Dispel",
+    15 => "Stun",         16 => "Speed",
+    17 => "Slow",         18 => "DmgShield",
+    19 => "Proc",         20 => "Weaken",
+    21 => "Banish",       22 => "Blind",
+    23 => "Cold DD",      24 => "Poison DD",
+    25 => "Fire DD",      27 => "MemBlur",
+    28 => "Gravity",      29 => "Drowning",
+    30 => "Lifetap DoT",  31 => "Fire AoE",
+    33 => "Cold AoE",     34 => "Poison AoE",
+    40 => "Teleport",     41 => "Bard DD",
+    42 => "Bard Buff",    43 => "Bard Calm",
+    50 => "Conversion",
+);
+
+# targettype → prefix to prepend (only when meaningful/non-default)
+# Single target (5=ST_Target, 1=ST_TargetOptional, 13=ST_Tap) gets no prefix
+my %TARGET_PREFIX = (
+    2  => "AoE",      # ST_AEClientV1
+    3  => "Group",    # ST_GroupTeleport
+    4  => "PBAoE",    # ST_AECaster
+    6  => "Self",     # ST_Self
+    8  => "AoE",      # ST_AETarget
+    9  => "Animal",   # ST_Animal
+    10 => "Undead",   # ST_Undead
+    11 => "Summon",   # ST_Summoned
+    14 => "Pet",      # ST_Pet
+    15 => "Corpse",   # ST_Corpse
+    20 => "AoE",      # ST_TargetAETap
+    24 => "AoE",      # ST_UndeadAE
+    25 => "AoE",      # ST_SummonedAE
+    32 => "AoE",      # ST_AETargetHateList
+    33 => "AoE",      # ST_HateList
+    36 => "AoE",      # ST_AreaClientOnly
+    37 => "AoE",      # ST_AreaNPCOnly
+    38 => "Pet",      # ST_SummonedPet
+    39 => "Group",    # ST_GroupNoPets
+    40 => "AoE",      # ST_AEBard
+    41 => "Group",    # ST_Group
+    42 => "Cone",     # ST_Directional
+    43 => "Group",    # ST_GroupClientAndPet
+    44 => "Beam",     # ST_Beam
+    45 => "Ring",     # ST_Ring
+    50 => "AoE",      # ST_TargetAENoPlayersPets
+);
+
+sub get_spell_desc {
+    my ($sai, $targettype) = @_;
+    my $type   = $SAI_LABEL{$sai}          || "Spell";
+    my $prefix = $TARGET_PREFIX{$targettype} || "";
+    # Avoid doubling "AoE" when the SAI already contains it
+    if ($prefix eq "AoE" && $type =~ /AoE/) { $prefix = ""; }
+    return $prefix ? "$prefix $type" : $type;
+}
+
 # ---- Query eligible spells ---------------------------------
-# Uses normalized spells_new (all classes have the same min level after
-# normalization, so any class can learn any spell at that level).
 print "Querying eligible spells...\n";
 my $sth = $dbh->prepare(q{
     SELECT
         s.id,
         s.name,
+        s.mana,
+        s.cast_time,
+        s.targettype,
+        s.spell_affect_index,
+        s.spell_icon,
         LEAST(
             IF(s.classes1  < 255, s.classes1,  999),
             IF(s.classes2  < 255, s.classes2,  999),
@@ -133,6 +205,10 @@ while (my $row = $sth->fetchrow_hashref()) {
         name      => $row->{name},
         scroll_id => $scroll_map{ $row->{id} } || 0,
         expac     => spell_expac($row->{id}),
+        mana      => $row->{mana}      || 0,
+        cast_ms   => $row->{cast_time} || 0,   # spells_new.cast_time is in ms
+        icon      => $row->{spell_icon} || 0,
+        desc      => get_spell_desc($row->{spell_affect_index}, $row->{targettype}),
     };
 }
 $sth->finish();
@@ -150,16 +226,20 @@ open(my $out, '>', $out_path) or die "Cannot write $out_path: $!";
 
 print $out <<'HEADER';
 -- ============================================================
--- spell_pool.lua  (AUTO-GENERATED — do not edit by hand)
+-- spell_pool.lua  (AUTO-GENERATED -- do not edit by hand)
 -- Regenerate: docker exec akk-stack-eqemu-server-1 \
 --               perl /home/eqemu/server/../assets/scripts/generate_spell_pool.pl
 --
 -- All classes can learn any spell (server-side normalization applied).
 -- Each entry:
---   level     = min level requirement (all classes equal after normalization)
+--   level     = min level requirement
 --   name      = spell name
 --   scroll_id = scroll item ID (0 = none, ScribeSpell used directly)
 --   expac     = 0:Classic 1:Kunark 2:Velious 3:Luclin+
+--   mana      = mana cost (0 = free/instant)
+--   cast_ms   = cast time in milliseconds (0 = instant)
+--   icon      = spell icon index (from spells_new.spell_icon)
+--   desc      = short description e.g. "Group Heal", "AoE Fire DD"
 -- ============================================================
 
 local M = {}
@@ -171,8 +251,13 @@ for my $sp (@spells) {
     my $name_esc = $sp->{name};
     $name_esc =~ s/\\/\\\\/g;
     $name_esc =~ s/"/\\"/g;
-    printf $out "    [%d] = { level = %d, name = \"%s\", scroll_id = %d, expac = %d },\n",
-        $sp->{id}, $sp->{level}, $name_esc, $sp->{scroll_id}, $sp->{expac};
+    my $desc_esc = $sp->{desc};
+    $desc_esc =~ s/\\/\\\\/g;
+    $desc_esc =~ s/"/\\"/g;
+    printf $out
+        "    [%d] = { level=%d, name=\"%s\", scroll_id=%d, expac=%d, mana=%d, cast_ms=%d, icon=%d, desc=\"%s\" },\n",
+        $sp->{id}, $sp->{level}, $name_esc, $sp->{scroll_id}, $sp->{expac},
+        $sp->{mana}, $sp->{cast_ms}, $sp->{icon}, $desc_esc;
 }
 
 print $out <<'FOOTER';
@@ -183,4 +268,4 @@ FOOTER
 
 close $out;
 print "Written: $out_path\n";
-print "Reload zones after restart for the Lua module to take effect.\n";
+print "Reload zones after container restart for the Lua module to take effect.\n";

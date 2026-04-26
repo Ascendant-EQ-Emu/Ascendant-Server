@@ -3,26 +3,17 @@
 -- Custom Spell Unlock System for Ascendant EQEmu Server
 --
 -- Flow:
---   1. Character levels up → DialogueWindow popup opens
---   2. Popup buttons trigger event_popup_response (SA_PICK1/2/3)
---   3. Spell is scribed directly into spellbook (ScribeSpell)
---   4. Award is recorded per character+level (anti-exploit)
+--   1. Character levels up → info popup + 3 chat saylinks
+--   2. Player reads popup (all 3 spells visible at once), closes it
+--   3. Player clicks a saylink in chat → event_say → spell scribed
 --
--- Popup IDs:
---   SA_PICK1 (1001) = choose spell 1 (YES on window 1)
---   SA_MORE  (1002) = see spells 2 & 3 (NO on window 1, 3-spell case)
---   SA_PICK2 (1003) = choose spell 2 (YES on window 2)
---   SA_PICK3 (1004) = choose spell 3 (NO on window 2)
---   SA_PASS  (1005) = pass / no choice (only offered for 1-spell case)
+-- Popup ID:
+--   SA_INFO (1000) = OK-only dismiss, no spell action
 -- ============================================================
 
 local M = {}
 
-local SA_PICK1 = 1001
-local SA_MORE  = 1002
-local SA_PICK2 = 1003
-local SA_PICK3 = 1004
-local SA_PASS  = 1005
+local SA_INFO = 1000
 
 local _pool = nil
 local function get_pool()
@@ -34,7 +25,27 @@ local function get_pool()
     return _pool
 end
 
--- ---- Expansion unlock -----------------------------------------------
+-- ---- Expansion display ------------------------------------------
+
+local EXPAC_NAMES  = { [0]="Classic", [1]="Kunark", [2]="Velious", [3]="Luclin+" }
+local EXPAC_COLORS = { [0]="#999999", [1]="#66BB44", [2]="#4499CC", [3]="#AA55CC" }
+
+-- ---- Type color based on description ----------------------------
+
+local function type_color(desc)
+    if not desc then return "#AAAAAA" end
+    if desc:find("DD") or desc:find("Damage") then return "#FF6633" end
+    if desc:find("Heal") or desc:find("Regen")  then return "#44EE44" end
+    if desc:find("Haste") or desc:find("Buff") or desc:find("AC")
+        or desc:find("STR") or desc:find("STA") or desc:find("Speed")
+        or desc:find("Rune") or desc:find("Invis") then return "#CCFF33" end
+    if desc:find("Snare") or desc:find("Root") or desc:find("Fear")
+        or desc:find("Stun") or desc:find("Calm") then return "#FF44FF" end
+    if desc:find("Mana") then return "#44AAFF" end
+    return "#AAAAAA"
+end
+
+-- ---- Expansion unlock -------------------------------------------
 
 local function get_max_expac(char_id)
     local k = tostring(char_id)
@@ -44,9 +55,7 @@ local function get_max_expac(char_id)
     return 0
 end
 
-local EXPAC_NAMES = { [0]="Classic", [1]="Kunark", [2]="Velious", [3]="Luclin+" }
-
--- ---- Data bucket helpers --------------------------------------------
+-- ---- Data bucket helpers ----------------------------------------
 
 local function bucket_done(char_id)    return "sa_done:"    .. char_id end
 local function bucket_pending(char_id) return "sa_pending:" .. char_id end
@@ -76,7 +85,7 @@ local function parse_pending(char_id)
     return ids, tonumber(level_str)
 end
 
--- ---- Random pick (Fisher-Yates partial) -----------------------------
+-- ---- Random pick (Fisher-Yates partial) -------------------------
 
 local function pick_random(list, count)
     local result, n = {}, #list
@@ -89,72 +98,15 @@ local function pick_random(list, count)
     return result
 end
 
--- ---- Popup window helpers -------------------------------------------
-
--- Returns a single formatted line: "{gold}Name~ (Level X)"
-local function spell_line(pool, spell_id)
-    local e = pool[spell_id]
-    if not e then return "<i>Unknown</i>" end
-    return string.format("{gold}%s~  (Level %d)", e.name, e.level)
-end
-
--- Window 1: shows all available spells, YES = choose spell 1.
--- If 3 choices: NO = see window 2.  If 2 choices: NO = choose spell 2.
-local function send_window1(client, choices, pool, level, expac_name)
-    local n    = #choices
-    local line1 = spell_line(pool, choices[1])
-    local title = string.format("Spell Award - Level %d  %s", level, expac_name)
-
-    if n == 1 then
-        client:DialogueWindow(string.format(
-            "{title:%s}wintype:1 popupid:%d secondresponseid:%d " ..
-            "{button_one:Learn Spell}{button_two:Pass}noquotes" ..
-            "%s",
-            title, SA_PICK1, SA_PASS, line1
-        ))
-    elseif n == 2 then
-        local line2 = spell_line(pool, choices[2])
-        client:DialogueWindow(string.format(
-            "{title:%s}wintype:1 popupid:%d secondresponseid:%d " ..
-            "{button_one:Spell 1}{button_two:Spell 2}noquotes" ..
-            "1)  %s<br>2)  %s",
-            title, SA_PICK1, SA_PICK2, line1, line2
-        ))
-    else
-        local line2 = spell_line(pool, choices[2])
-        local line3 = spell_line(pool, choices[3])
-        client:DialogueWindow(string.format(
-            "{title:%s}wintype:1 popupid:%d secondresponseid:%d " ..
-            "{button_one:Spell 1}{button_two:Spells 2 or 3}noquotes" ..
-            "1)  %s<br>2)  %s<br>3)  %s",
-            title, SA_PICK1, SA_MORE, line1, line2, line3
-        ))
-    end
-end
-
--- Window 2: shown when player clicks "Spells 2 or 3" in window 1.
-local function send_window2(client, choices, pool, level)
-    local line2 = spell_line(pool, choices[2])
-    local line3 = spell_line(pool, choices[3])
-    client:DialogueWindow(string.format(
-        "{title:Spell Award - Level %d  Options 2 and 3}" ..
-        "wintype:1 popupid:%d secondresponseid:%d " ..
-        "{button_one:Spell 2}{button_two:Spell 3}noquotes" ..
-        "2)  %s<br>3)  %s",
-        level, SA_PICK2, SA_PICK3, line2, line3
-    ))
-end
-
--- ---- Award spell to client ------------------------------------------
+-- ---- Award spell ------------------------------------------------
 
 local function award_spell(client, spell_id)
     local pool  = get_pool()
     local entry = pool and pool[spell_id]
     if not entry then return false end
-
     local slot = client:GetNextAvailableSpellBookSlot()
     if slot < 0 then
-        client:Message(4, "Your spellbook is full! Please free a slot and contact a GM.")
+        client:Message(4, "Your spellbook is full! Free a slot and contact a GM.")
         return false
     end
     client:ScribeSpell(spell_id, slot, true)
@@ -162,7 +114,73 @@ local function award_spell(client, spell_id)
     return true
 end
 
--- ---- Public: level-up event -----------------------------------------
+-- ---- Popup / chat helpers ---------------------------------------
+
+-- Strip chars that trigger special processing in DialogueWindow
+local function dw_safe(s)
+    if not s then return "" end
+    return s:gsub("[~%+=%[%]%{%}]", "")
+end
+
+-- One spell block for the popup body
+local function spell_block(pool, spell_id, num)
+    local e = pool[spell_id]
+    if not e then return "" end
+    local ec = EXPAC_COLORS[e.expac] or "#999999"
+    local en = EXPAC_NAMES[e.expac]  or "Classic"
+    local tc = type_color(e.desc)
+    local nm = dw_safe(e.name)
+    local ds = dw_safe(e.desc or "")
+    local mn = (e.mana and e.mana > 0) and ("  Mana:" .. e.mana) or ""
+    local ct = (e.cast_ms and e.cast_ms > 0)
+        and string.format("  Cast:%.1fs", e.cast_ms / 1000)
+        or  ""
+    return string.format(
+        '<c "#FFCC44">-- %d -----------------------------------------------</c><br>'
+        .. '<c "%s">* </c><c "#FFFFFF">%s</c>   <c "%s">%s</c><br>'
+        .. '<c "#888888">%s%s%s</c><br>',
+        num,
+        tc, nm,
+        ec, en,
+        ds, mn, ct
+    )
+end
+
+-- Show all choices in a single info popup (OK-only, no spell action)
+local function send_info_popup(client, choices, pool, level)
+    local body = ""
+    for i = 1, #choices do
+        body = body .. spell_block(pool, choices[i], i)
+    end
+    body = body .. '<c "#F07F00">Click your choice in the chat window below.</c>'
+    client:DialogueWindow(string.format(
+        "{title:Spell Award - Level %d}popupid:%d hiddenresponse noquotes%s",
+        level, SA_INFO, body
+    ))
+end
+
+-- Send chat saylinks — item icon (from scroll) where available, then saylink
+local function send_choice_chat(client, choices, pool)
+    client:Message(MT.LightBlue, "===== SPELL AWARD  -  Click to Choose =====")
+    for i, spell_id in ipairs(choices) do
+        local e = pool[spell_id]
+        if not e then goto continue end
+        local link = eq.say_link(
+            tostring(i), false,
+            string.format("  [%d: %s]  ", i, e.name)
+        )
+        local icon = (e.scroll_id and e.scroll_id > 0)
+            and (eq.item_link(e.scroll_id) .. "  ")
+            or  ""
+        client:Message(MT.White, icon .. link)
+        ::continue::
+    end
+    local pass_link = eq.say_link("pass", false, "  [Pass - No Spell This Level]  ")
+    client:Message(MT.Gray, pass_link)
+    client:Message(MT.LightBlue, "===========================================")
+end
+
+-- ---- Public: level-up -------------------------------------------
 
 function M.on_level_up(client)
     local char_id = client:CharacterID()
@@ -170,13 +188,13 @@ function M.on_level_up(client)
 
     if level_already_awarded(char_id, level) then return end
 
-    -- Re-show the pending window if they have an unanswered offer
+    -- Re-show any pending unanswered offer
     local stale_ids, stale_level = parse_pending(char_id)
     if stale_ids then
         local pool = get_pool()
         if pool then
-            local expac = pool[stale_ids[1]] and pool[stale_ids[1]].expac or 0
-            send_window1(client, stale_ids, pool, stale_level, EXPAC_NAMES[expac] or "Classic")
+            send_info_popup(client, stale_ids, pool, stale_level)
+            send_choice_chat(client, stale_ids, pool)
         end
         return
     end
@@ -206,41 +224,37 @@ function M.on_level_up(client)
     local choices = pick_random(eligible, 3)
     eq.set_data(bucket_pending(char_id), table.concat(choices, ",") .. ":" .. level)
 
-    local expac_name = EXPAC_NAMES[max_expac] or "Classic"
-    send_window1(client, choices, pool, level, expac_name)
+    send_info_popup(client, choices, pool, level)
+    send_choice_chat(client, choices, pool)
 end
 
--- ---- Public: popup response (button clicks) -------------------------
+-- ---- Public: popup response -------------------------------------
 
 function M.on_popup_response(client, popup_id)
+    if popup_id == SA_INFO then return true end  -- dismiss only
+    return false
+end
+
+-- ---- Public: say handler (saylink clicks) -----------------------
+
+function M.on_say(client, message)
     local char_id = client:CharacterID()
 
-    -- Player passed on their only option
-    if popup_id == SA_PASS then
-        local _, level_str = parse_pending(char_id)
-        if level_str then mark_level_awarded(char_id, level_str) end
+    if message == "pass" then
+        local _, level_num = parse_pending(char_id)
+        if level_num then mark_level_awarded(char_id, level_num) end
         eq.delete_data(bucket_pending(char_id))
+        client:Message(MT.Gray, "You pass on this level's spell award.")
         return true
     end
 
-    -- Player wants to see spells 2 & 3
-    if popup_id == SA_MORE then
-        local ids, level_num = parse_pending(char_id)
-        if ids and #ids >= 3 then
-            local pool = get_pool()
-            if pool then send_window2(client, ids, pool, level_num) end
-        end
-        return true
-    end
-
-    -- Spell choice
-    local choice_index = ({ [SA_PICK1]=1, [SA_PICK2]=2, [SA_PICK3]=3 })[popup_id]
-    if not choice_index then return false end
+    local choice = message:match("^%s*([123])%s*$")
+    if not choice then return false end
 
     local ids, level_num = parse_pending(char_id)
     if not ids then return false end
 
-    local spell_id = ids[choice_index]
+    local spell_id = ids[tonumber(choice)]
     if not spell_id then
         client:Message(4, "Invalid spell choice. Please contact a GM.")
         return true
@@ -249,33 +263,7 @@ function M.on_popup_response(client, popup_id)
     if award_spell(client, spell_id) then
         mark_level_awarded(char_id, level_num)
         eq.delete_data(bucket_pending(char_id))
-        client:Message(15, "Spell award recorded. Congratulations!")
-    else
-        client:Message(4, "Something went wrong. Please try again or contact a GM.")
-    end
-    return true
-end
-
--- ---- Public: say fallback (kept for backwards compatibility) --------
-
-function M.on_say(client, message)
-    local char_id = client:CharacterID()
-    local choice  = message:match("^%s*([123])%s*$")
-    if not choice then return false end
-
-    local ids, level_num = parse_pending(char_id)
-    if not ids then return false end
-
-    local spell_id = ids[tonumber(choice)]
-    if not spell_id then
-        client:Message(4, "Invalid choice.")
-        return true
-    end
-
-    if award_spell(client, spell_id) then
-        mark_level_awarded(char_id, level_num)
-        eq.delete_data(bucket_pending(char_id))
-        client:Message(15, "Spell award recorded. Congratulations!")
+        client:Message(15, "Spell award complete. Congratulations!")
     else
         client:Message(4, "Something went wrong. Please try again or contact a GM.")
     end
