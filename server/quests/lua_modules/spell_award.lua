@@ -164,16 +164,16 @@ local function send_choice_chat(client, choices, pool)
     client:Message(MT.LightBlue, "===== SPELL AWARD  -  Click to Choose =====")
     for i, spell_id in ipairs(choices) do
         local e = pool[spell_id]
-        if not e then goto continue end
-        local link = eq.say_link(
-            tostring(i), false,
-            string.format("  [%d: %s]  ", i, e.name)
-        )
-        local icon = (e.scroll_id and e.scroll_id > 0)
-            and (eq.item_link(e.scroll_id) .. "  ")
-            or  ""
-        client:Message(MT.White, icon .. link)
-        ::continue::
+        if e then
+            local link = eq.say_link(
+                tostring(i), false,
+                string.format("  [%d: %s]  ", i, e.name)
+            )
+            local icon = (e.scroll_id and e.scroll_id > 0)
+                and (eq.item_link(e.scroll_id) .. "  ")
+                or  ""
+            client:Message(MT.White, icon .. link)
+        end
     end
     local pass_link = eq.say_link("pass", false, "  [Pass - No Spell This Level]  ")
     client:Message(MT.Gray, pass_link)
