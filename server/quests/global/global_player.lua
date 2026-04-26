@@ -90,6 +90,8 @@ function event_level_up(e)
     end
 
     if e.self:GetLevel() == 5 then
-        eq.popup("", "<c \"#F0F000\">Welcome to level 5.</c><br><br>You have just been granted a new ability called '<c \"#F0F000\">Origin</c>' which allows you to teleport back to your starting city.<br><br>Open the Alternate Advancement window by pressing the '<c \"#F0F000\">V</c>' key, look in the '<c \"#F0F000\">General' tab</c>, and find the '<c \"#F0F000\">Origin</c>' ability and select it.<br><br>Now press the '<c \"#F0F000\">Hotkey</c>' button to create a hotkey you can place on your hot bar.")
+        -- Send as chat instead of popup so it doesn't clobber the spell award window
+        e.self:Message(MT.Yellow, "Welcome to level 5!")
+        e.self:Message(MT.Yellow, "You have been granted the 'Origin' ability -- press V, go to the General AA tab, find Origin, and hotkey it to teleport back to your starting city.")
     end
 end
