@@ -53,6 +53,59 @@ my $dbh = DBI->connect(
     { RaiseError => 1, PrintError => 0 }
 ) or die "DB connect failed: $DBI::errstr";
 
+# ---- Read level data from spells_us.txt -------------------------
+# classesX in the DB are all set to 1 for unrestricted casting, so we
+# use the unmodified spells_us.txt as the authoritative level source.
+my $spells_us_path = '/home/eqemu/server/export/spells_us.txt';
+$spells_us_path = 'server/export/spells_us.txt' unless -f $spells_us_path;
+
+my %spell_level;
+{
+    open(my $sfh, '<', $spells_us_path) or die "Cannot read $spells_us_path: $!";
+    while (my $line = <$sfh>) {
+        chomp $line;
+        my @f = split(/\^/, $line, -1);
+        next unless @f > 119 && $f[0] =~ /^\d+$/;
+        my $min = 999;
+        for my $ci (104..119) {
+            my $v = $f[$ci] // 255;
+            if ($v =~ /^\d+$/ && $v > 0 && $v < 255) {
+                $min = $v if $v < $min;
+            }
+        }
+        $spell_level{ $f[0] } = ($min < 999) ? $min : 1;
+    }
+    close $sfh;
+}
+printf "Loaded level data for %d spells from spells_us.txt.\n", scalar keys %spell_level;
+
+# ---- Generate modified spells_us.txt for client distribution ----
+# Sets all non-255 class levels to 1 so players can memorize any
+# awarded spell regardless of character level.  Copy this file to
+# your EQ client directory as spells_us.txt.
+my $client_out_path = '/home/eqemu/server/export/spells_us_norequirements.txt';
+$client_out_path = 'server/export/spells_us_norequirements.txt' unless -d '/home/eqemu';
+{
+    open(my $in,  '<', $spells_us_path)   or die "Cannot read $spells_us_path: $!";
+    open(my $out, '>', $client_out_path)  or die "Cannot write $client_out_path: $!";
+    while (my $line = <$in>) {
+        chomp $line;
+        my @f = split(/\^/, $line, -1);
+        if (@f > 119 && $f[0] =~ /^\d+$/) {
+            for my $ci (104..119) {
+                if (defined $f[$ci] && $f[$ci] =~ /^\d+$/ && $f[$ci] > 1 && $f[$ci] < 255) {
+                    $f[$ci] = 1;
+                }
+            }
+        }
+        print $out join('^', @f) . "\n";
+    }
+    close $in;
+    close $out;
+}
+printf "Written: %s\n", $client_out_path;
+print "  -> Copy to your EQ client directory as spells_us.txt to allow memorizing at any level.\n";
+
 # ---- Build scroll item lookup: spell_id -> lowest item_id --
 print "Building scroll item map...\n";
 my %scroll_map;
@@ -146,25 +199,7 @@ my $sth = $dbh->prepare(q{
         s.targettype,
         s.SpellAffectIndex,
         s.effectid1,
-        s.icon,
-        LEAST(
-            IF(s.classes1  < 255, s.classes1,  999),
-            IF(s.classes2  < 255, s.classes2,  999),
-            IF(s.classes3  < 255, s.classes3,  999),
-            IF(s.classes4  < 255, s.classes4,  999),
-            IF(s.classes5  < 255, s.classes5,  999),
-            IF(s.classes6  < 255, s.classes6,  999),
-            IF(s.classes7  < 255, s.classes7,  999),
-            IF(s.classes8  < 255, s.classes8,  999),
-            IF(s.classes9  < 255, s.classes9,  999),
-            IF(s.classes10 < 255, s.classes10, 999),
-            IF(s.classes11 < 255, s.classes11, 999),
-            IF(s.classes12 < 255, s.classes12, 999),
-            IF(s.classes13 < 255, s.classes13, 999),
-            IF(s.classes14 < 255, s.classes14, 999),
-            IF(s.classes15 < 255, s.classes15, 999),
-            IF(s.classes16 < 255, s.classes16, 999)
-        ) AS min_level
+        s.icon
     FROM spells_new s
     WHERE
         s.cast_time > 0
@@ -202,7 +237,7 @@ my @spells;
 while (my $row = $sth->fetchrow_hashref()) {
     push @spells, {
         id        => $row->{id},
-        level     => $row->{min_level},
+        level     => $spell_level{ $row->{id} } || 1,
         name      => $row->{name},
         scroll_id => $scroll_map{ $row->{id} } || 0,
         expac     => spell_expac($row->{id}),
