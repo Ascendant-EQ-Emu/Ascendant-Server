@@ -230,7 +230,7 @@ local function send_info_popup(client, choices, rare_item_id, level)
             body = body .. string.format(
                 '<c "#FFD700">== %d == *** RARE ITEM *** ==========================</c><br>'
                 .. '<c "#FFD700">%s</c><br>'
-                .. '<c "#AAAAAA">A rare and powerful item has found its way to you!</c><br>',
+                .. '<c "#AAAAAA">Instead of a spell option, a rare and powerful item has found its way to you!</c><br>',
                 #choices + 1,
                 dw_safe(entry.name)
             )
@@ -302,9 +302,7 @@ function M.on_level_up(client)
         return
     end
 
-    local choices = pick_random(eligible, 3)
-    eq.set_data(bucket_pending(char_id), table.concat(choices, ",") .. ":" .. level)
-
+    -- Roll rare first so we know how many spell slots to fill
     local rare_item_id = nil
     local force_key = "sa_force_rare:" .. char_id
     local force_rare = eq.get_data(force_key) == "1"
@@ -319,6 +317,11 @@ function M.on_level_up(client)
             eq.set_data(bucket_rare(char_id), tostring(rare_item_id))
         end
     end
+
+    -- 4 spells when no rare, 3 spells when rare takes the 4th slot
+    local spell_count = rare_item_id and 3 or 4
+    local choices = pick_random(eligible, spell_count)
+    eq.set_data(bucket_pending(char_id), table.concat(choices, ",") .. ":" .. level)
 
     send_info_popup(client, choices, rare_item_id, level)
     send_choice_chat(client, choices, rare_item_id)
