@@ -223,14 +223,19 @@ function M.on_level_up(client)
         return
     end
 
+    -- Build scribed-spell set with a single API call instead of per-spell checks
+    local scribed = {}
+    local scribed_list = client:GetScribedSpells()
+    for _, sid in ipairs(scribed_list) do
+        scribed[sid] = true
+    end
+
     local max_expac = get_max_expac(char_id)
     local eligible  = {}
     for spell_id, data in pairs(pool) do
         -- Offer spells up to 5 levels beyond current level for variety
-        if data.level <= level + 5 and data.expac <= max_expac then
-            if not client:HasSpellScribed(spell_id) then
-                eligible[#eligible + 1] = spell_id
-            end
+        if data.level <= level + 5 and data.expac <= max_expac and not scribed[spell_id] then
+            eligible[#eligible + 1] = spell_id
         end
     end
 
