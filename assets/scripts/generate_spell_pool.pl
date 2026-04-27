@@ -111,9 +111,7 @@ $client_out_path = 'server/export/spells_us_norequirements.txt' unless -d '/home
         my @f = split(/\^/, $line, -1);
         if (@f > 119 && $f[0] =~ /^\d+$/) {
             for my $ci (104..119) {
-                if (defined $f[$ci] && $f[$ci] =~ /^\d+$/ && $f[$ci] > 1 && $f[$ci] < 255) {
-                    $f[$ci] = 1;
-                }
+                $f[$ci] = 1;
             }
         }
         print $out join('^', @f) . "\n";

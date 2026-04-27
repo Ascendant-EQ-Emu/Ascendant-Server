@@ -71,7 +71,7 @@ void Adventure::AddPlayer(std::string character_name, bool add_client_to_instanc
 			AdventureMembersRepository::ReplaceOne(
 				database,
 				AdventureMembersRepository::AdventureMembers{
-					.id = instance_id,
+					.id = static_cast<uint32_t>(instance_id),
 					.charid = static_cast<uint32_t>(character_id)
 				}
 			);
