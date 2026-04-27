@@ -257,13 +257,14 @@ end
 
 local function send_choice_chat(client, choices, rare_item_id)
     client:Message(MT.LightBlue, "===== REWARD AVAILABLE  -  Click to Choose =====")
+    client:Message(MT.Gray, "Left side to select  |  Right side to inspect")
     for i, spell_id in ipairs(choices) do
         local e = _pool and _pool[spell_id]
         if e then
             local pick_link = eq.say_link(tostring(i), false,
-                string.format("[%d: %s]", i, e.name))
+                string.format("[%d. %s]", i, e.name))
             local scroll_link = (e.scroll_id and e.scroll_id > 0)
-                and ("   " .. eq.item_link(e.scroll_id)) or ""
+                and (" -------- " .. eq.item_link(e.scroll_id)) or ""
             client:Message(MT.White, pick_link .. scroll_link)
         end
     end
