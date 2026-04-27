@@ -4,6 +4,8 @@ local PRESTIGE_AA_ID = 60000
 local PRESTIGE_TOKEN_ITEM_ID = 600001
 local PRESTIGE_TOKENS_PER_RESET = 10
 
+local spell_award = require("spell_award")
+
 local function get_prestige_required_level()
     local result = eq.query("SELECT rule_value FROM rule_values WHERE rule_name = 'Character:MaxLevel' LIMIT 1")
 
@@ -62,4 +64,34 @@ function event_aa_buy(e)
     end
 
     client:Message(MT.Yellow, 'You are reborn at level 1 and receive 10 Prestige Tokens. Return them to the Prestige Keeper for power.')
+end
+
+function event_command(e)
+    eq.DispatchCommands(e)
+end
+
+function event_say(e)
+    spell_award.on_say(e.self, e.message)
+end
+
+function event_popup_response(e)
+    spell_award.on_popup_response(e.self, e.popup_id)
+end
+
+function event_level_up(e)
+    spell_award.on_level_up(e.self)
+
+    local free_skills = {0,1,2,3,4,5,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,28,29,30,31,32,33,34,36,37,38,39,41,42,43,44,45,46,47,49,51,52,54,67,70,71,72,73,74,76}
+
+    for k, v in ipairs(free_skills) do
+        if e.self:MaxSkill(v) > 0 and e.self:GetRawSkill(v) < 1 and e.self:CanHaveSkill(v) then
+            e.self:SetSkill(v, 1)
+        end
+    end
+
+    if e.self:GetLevel() == 5 then
+        -- Send as chat instead of popup so it doesn't clobber the spell award window
+        e.self:Message(MT.Yellow, "Welcome to level 5!")
+        e.self:Message(MT.Yellow, "You have been granted the 'Origin' ability -- press V, go to the General AA tab, find Origin, and hotkey it to teleport back to your starting city.")
+    end
 end
