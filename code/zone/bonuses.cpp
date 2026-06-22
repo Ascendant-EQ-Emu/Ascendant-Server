@@ -1847,9 +1847,6 @@ void Mob::CalcSpellBonuses(StatBonuses* newbon)
 				NegateSpellEffectBonuses(buffs[i].spellid);
 		}
 	}
-
-	if (GetClass() == Class::Bard)
-		newbon->ManaRegen = 0; // Bards do not get mana regen from spells.
 }
 
 void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *new_bonus, uint16 casterId,
