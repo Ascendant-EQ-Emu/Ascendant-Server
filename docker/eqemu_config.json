@@ -1,0 +1,77 @@
+{
+  "server": {
+    "world": {
+      "shortname": "Ascendant",
+      "longname": "Ascendant Server",
+      "address": "",
+      "localaddress": "",
+      "maxclients": "-1",
+      "key": "",
+      "locked": "false",
+      "loginserver": {
+        "host": "loginserver",
+        "port": "5998",
+        "account": "",
+        "password": ""
+      },
+      "tcp": {
+        "ip": "0.0.0.0",
+        "port": "9000"
+      },
+      "telnet": {
+        "ip": "0.0.0.0",
+        "port": "9001",
+        "enabled": "true"
+      },
+      "http": {
+        "enabled": "false",
+        "port": "9080"
+      }
+    },
+    "zones": {
+      "defaultstatus": "0",
+      "ports": {
+        "low": "7000",
+        "high": "7100"
+      }
+    },
+    "database": {
+      "host": "mariadb",
+      "port": "3306",
+      "username": "eqemu",
+      "password": "eqemu",
+      "db": "peq"
+    },
+    "qsdatabase": {
+      "host": "mariadb",
+      "port": "3306",
+      "username": "eqemu",
+      "password": "eqemu",
+      "db": "peq"
+    },
+    "ucs": {
+      "host": "ucs",
+      "port": "7778"
+    },
+    "files": {
+      "spells": "assets/spells/spells_us.txt",
+      "opcodes": "assets/opcodes/opcodes.conf",
+      "mail_opcodes": "assets/opcodes/mail_opcodes.conf"
+    },
+    "directories": {
+      "maps": "maps/",
+      "quests": "quests/",
+      "plugins": "plugins/",
+      "lua_modules": "lua_modules/",
+      "patches": "assets/patches/",
+      "opcodes": "assets/opcodes/",
+      "shared_memory": "shared/",
+      "logs": "logs/"
+    },
+    "launcher": {
+      "logprefix": "logs/zone-",
+      "logsuffix": ".log"
+    },
+    "auto_database_updates": "true"
+  }
+}

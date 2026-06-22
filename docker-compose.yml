@@ -1,0 +1,175 @@
+services:
+  # MariaDB database
+  mariadb:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-eqemu}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-peq}
+      MYSQL_USER: ${MYSQL_USER:-eqemu}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-eqemu}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+      - ./database:/docker-entrypoint-initdb.d/database:ro
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Shared memory loader - must run before world/zone
+  shared_memory:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - shared_data:/home/eqemu/server/shared
+      - ./docker/eqemu_config.json:/home/eqemu/server/eqemu_config.json:ro
+      - ./server/assets:/home/eqemu/server/assets:ro
+      - ./server/maps:/home/eqemu/server/maps:ro
+    command: ["bin/shared_memory"]
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  # World server - central coordinator
+  world:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - shared_data:/home/eqemu/server/shared:ro
+      - ./docker/eqemu_config.json:/home/eqemu/server/eqemu_config.json:ro
+      - ./server/assets:/home/eqemu/server/assets:ro
+      - ./server/quests:/home/eqemu/server/quests:ro
+      - ./server/plugins:/home/eqemu/server/plugins:ro
+      - ./server/lua_modules:/home/eqemu/server/lua_modules:ro
+      - ./server/maps:/home/eqemu/server/maps:ro
+      - world_logs:/home/eqemu/server/logs
+    command: ["bin/world"]
+    ports:
+      - "9000:9000"     # World TCP
+      - "9001:9001"     # Telnet (if enabled)
+      - "9080:9080"     # HTTP (if enabled)
+    depends_on:
+      shared_memory:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Zone server instances managed by eqlaunch
+  zones:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - shared_data:/home/eqemu/server/shared:ro
+      - ./docker/eqemu_config.json:/home/eqemu/server/eqemu_config.json:ro
+      - ./server/assets:/home/eqemu/server/assets:ro
+      - ./server/quests:/home/eqemu/server/quests:ro
+      - ./server/plugins:/home/eqemu/server/plugins:ro
+      - ./server/lua_modules:/home/eqemu/server/lua_modules:ro
+      - ./server/maps:/home/eqemu/server/maps:ro
+      - zone_logs:/home/eqemu/server/logs
+    command: ["bin/eqlaunch", "zones"]
+    ports:
+      - "7000-7100:7000-7100/udp"
+    depends_on:
+      shared_memory:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Login server
+  loginserver:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ./docker/eqemu_config.json:/home/eqemu/server/eqemu_config.json:ro
+      - ./docker/login.json:/home/eqemu/server/login.json:ro
+      - ./server/assets:/home/eqemu/server/assets:ro
+      - login_logs:/home/eqemu/server/logs
+    command: ["bin/loginserver"]
+    ports:
+      - "5998:5998/udp"
+      - "5998:5998/tcp"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Universal Chat Server
+  ucs:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ./docker/eqemu_config.json:/home/eqemu/server/eqemu_config.json:ro
+      - ./server/assets:/home/eqemu/server/assets:ro
+      - ucs_logs:/home/eqemu/server/logs
+    command: ["bin/ucs"]
+    ports:
+      - "7778:7778"
+    depends_on:
+      shared_memory:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Query server
+  queryserv:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ./docker/eqemu_config.json:/home/eqemu/server/eqemu_config.json:ro
+      - ./server/assets:/home/eqemu/server/assets:ro
+      - queryserv_logs:/home/eqemu/server/logs
+    command: ["bin/queryserv"]
+    depends_on:
+      shared_memory:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Spire - web admin and content editor
+  spire:
+    build:
+      context: ./docker/spire
+    volumes:
+      - ./docker/eqemu_config.json:/home/eqemu/server/eqemu_config.json:ro
+    ports:
+      - "3010:3010"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Automated database backups
+  backup:
+    build:
+      context: ./docker/backup
+    volumes:
+      - backup_data:/backups
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: "3306"
+      DB_USER: ${MYSQL_USER:-eqemu}
+      DB_PASS: ${MYSQL_PASSWORD:-eqemu}
+      DB_NAME: ${MYSQL_DATABASE:-peq}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 */6 * * *}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  shared_data:
+  world_logs:
+  zone_logs:
+  login_logs:
+  ucs_logs:
+  queryserv_logs:
+  backup_data:

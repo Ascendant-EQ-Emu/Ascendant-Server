@@ -1,0 +1,6 @@
+.git
+code/build
+code/submodules/vcpkg/downloads
+code/submodules/vcpkg/buildtrees
+code/submodules/vcpkg/packages
+*.tar.gz
